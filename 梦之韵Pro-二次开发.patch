@@ -1223,6 +1223,21 @@ index efdb3cb..2c3feef 100644
      public static PageSetupLog? frmSetupLog;
      public static PageSetupFeedback? frmSetupFeedback;
      public static PageSetupGameLink? frmSetupGameLink;
+diff --git a/Plain Craft Launcher 2/Pages/PageLaunch/PageLaunchRight.xaml.cs b/Plain Craft Launcher 2/Pages/PageLaunch/PageLaunchRight.xaml.cs
+index 7bb7e6c..966c8e1 100644
+--- a/Plain Craft Launcher 2/Pages/PageLaunch/PageLaunchRight.xaml.cs	
++++ b/Plain Craft Launcher 2/Pages/PageLaunch/PageLaunchRight.xaml.cs	
+@@ -49,8 +49,8 @@ public partial class PageLaunchRight : IRefreshable
+         var input = ModMain.MyMsgBoxInput(Lang.Text("Launch.Right.CommunityHint.InputTitle"));
+         if (string.IsNullOrWhiteSpace(input))
+             return;
+-        input = new string(input.Where(char.IsAsciiLetter).ToArray()).ToLower();
+-        if (input.Contains("pclcommunity"))
++        input = new string(input.Where(c => char.IsAsciiLetter(c) || (c >= '\u4e00' && c <= '\u9fff')).ToArray()).ToLower();
++        if (input.Contains("梦之韵团队"))
+         {
+             ModAnimation.AniDispose(PanHint, true);
+             States.Hint.CEMessage = false;
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml
 index 06b898c..7fdb774 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml	
