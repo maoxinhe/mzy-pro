@@ -414,7 +414,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
     </div>
     <div class="dl-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-      下载链接正在接入官网服务器，敬请期待。当前版本运行需 Windows 10 1809 及以上。
+      通过 GitHub Releases 托管分发，点击即跳转下载。当前版本运行需 Windows 10 1809 及以上。
     </div>
   </div>
 </section>
@@ -464,9 +464,10 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
   }
   var c=document.getElementById('addrCopyBtn');
   if(c){c.addEventListener('click',copyAddr);c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();copyAddr();}});}
-  // 下载按钮：占位提示
+  // 下载按钮：GitHub Releases 直链
+  var DL_BASE='https://github.com/maoxinhe/mzy-pro/releases/latest/download/';
   var dl=document.querySelectorAll('[data-dl]');
-  dl.forEach(function(b){b.addEventListener('click',function(){show('下载链接正在接入官网服务器，敬请期待');});});
+  dl.forEach(function(b){b.addEventListener('click',function(){var f=b.getAttribute('data-dl')==='x64'?'MengZhiYunPro-x64.exe':'MengZhiYunPro-arm64.exe';window.open(DL_BASE+f,'_blank');});});
 })();
 </script>
 </body>
