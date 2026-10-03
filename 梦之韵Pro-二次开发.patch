@@ -1,7 +1,27 @@
 diff --git a/PCL.Core/App/Config.cs b/PCL.Core/App/Config.cs
-index 01f4a52..2d2184c 100644
+index 01f4a52..63f07ff 100644
 --- a/PCL.Core/App/Config.cs
 +++ b/PCL.Core/App/Config.cs
+@@ -80,8 +80,8 @@ public static partial class Config
+         [ConfigItem<int>("ToolDownloadFileConnection", 7)] public partial int FileConnectionLimit { get; set; }
+         [ConfigItem<int>("ToolDownloadSpeed", 42)] public partial int SpeedLimit { get; set; }
+         [ConfigItem<DownloadHttpMode>("ToolDownloadHttpMode", DownloadHttpMode.Auto)] public partial DownloadHttpMode HttpMode { get; set; }
+-        [ConfigItem<int>("ToolDownloadSource", 1)] public partial int FileSource { get; set; }
+-        [ConfigItem<int>("ToolDownloadVersion", 1)] public partial int VersionListSource { get; set; }
++        [ConfigItem<int>("ToolDownloadSource", 0)] public partial int FileSource { get; set; }
++        [ConfigItem<int>("ToolDownloadVersion", 0)] public partial int VersionListSource { get; set; }
+         [ConfigItem<bool>("ToolDownloadAutoSelectVersion", true)] public partial bool AutoSelectInstance { get; set; }
+         [ConfigItem<bool>("ToolFixAuthlib", true)] public partial bool FixAuthLib { get; set; }
+ 
+@@ -95,7 +95,7 @@ public static partial class Config
+             [ConfigItem<bool>("ToolDownloadIgnoreQuilt", true)] public partial bool IgnoreQuilt { get; set; }
+             [ConfigItem<bool>("ToolDownloadAutoInstallDependencies", true)] public partial bool AutoInstallDependencies { get; set; }
+             [ConfigItem<bool>("ToolDownloadClipboard", false)] public partial bool ReadClipboard { get; set; }
+-            [ConfigItem<int>("ToolDownloadMod", 1)] public partial int CompSourceSolution { get; set; }
++            [ConfigItem<int>("ToolDownloadMod", 0)] public partial int CompSourceSolution { get; set; }
+             [ConfigItem<int>("ToolModLocalNameStyle", 0)] public partial int UiCompNameSolution { get; set; }
+             [ConfigItem<int>("ToolDownloadQuickBehavior", 0)] public partial int QuickDownloadBehavior { get; set; }
+         }
 @@ -212,7 +212,7 @@ public static partial class Config
          /// <summary>
          /// 窗口标题文本。
@@ -1211,6 +1231,19 @@ index 0000000..aeb818e
 +        return result;
 +    }
 +}
+diff --git a/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs b/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs
+index 4d3ba6f..6ddad43 100644
+--- a/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs	
++++ b/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs	
+@@ -372,7 +372,7 @@ public static class ModDownload
+             if (!dlPreferMojang)
+             {
+                 var deltaTime = TimeUtils.GetTimeTick() - startTime;
+-                dlPreferMojang = deltaTime < 4000;
++                dlPreferMojang = deltaTime < 1500;
+                 ModBase.Log($"[Download] Mojang 官方源加载耗时：{deltaTime}ms，{(dlPreferMojang ? "可优先使用官方源" : "不优先使用官方源")}");
+             }
+ 
 diff --git a/Plain Craft Launcher 2/Modules/ModMain.cs b/Plain Craft Launcher 2/Modules/ModMain.cs
 index efdb3cb..2c3feef 100644
 --- a/Plain Craft Launcher 2/Modules/ModMain.cs	
