@@ -1006,10 +1006,10 @@ index f586cf9..d799bb4 100644
                      ModMain.frmSetupUI.CheckLogoLeft.Visibility = Visibility.Collapsed;
 diff --git a/Plain Craft Launcher 2/Modules/Minecraft/ModAutoUpdater.cs b/Plain Craft Launcher 2/Modules/Minecraft/ModAutoUpdater.cs
 new file mode 100644
-index 0000000..aeb818e
+index 0000000..ce5ebbd
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Modules/Minecraft/ModAutoUpdater.cs	
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,274 @@
 +using System;
 +using System.Collections.Generic;
 +using System.IO;
@@ -1026,19 +1026,21 @@ index 0000000..aeb818e
 +/// <summary>
 +///     模组自动更新器。
 +///     移植自 ModAutoUpdater（作者 liminalily），用于在用户 mods 文件夹内下载/更新模组：
-+///     1. 从服务器拉取模组清单（纯数组，或 {"files":[...], "delete":[...]} 对象）；
-+///     2. 对比本地 mods 目录，下载缺失模组；
++///     1. 从 API 平台拉取模组清单（files 元素可为字符串或 {name, sources} 对象）；
++///     2. 对比本地 mods 目录，下载缺失模组（多源依次尝试）；
 +///     3. 删除清单中标记移除的多余模组。
 +/// </summary>
 +public static class ModAutoUpdater
 +{
 +    // ===== 服务端配置（可按需修改）=====
-+    public const string Host = "cdn.liminalily.com"; // 模组资源服务器域名
-+    public const string ManifestPath = "/document/modlist.json"; // 模组清单路径
-+    public const string ModsPrefix = "/resource/mods/"; // 模组文件下载前缀
++    public const string ApiBase = "https://apc.camzy.uno"; // API 平台地址
++    public const string ManifestPath = "/api/mods"; // 模组清单接口（含多源下载直链）
++
++    /// <summary>模组更新功能总开关（由远程配置控制）。</summary>
++    public static bool IsEnabled { get; set; } = true;
 +
 +    public const int Concurrency = 5; // 并发下载数
-+    public const int MaxRetries = 3; // 单文件重试次数
++    public const int MaxRetries = 3; // 单源重试次数
 +
 +    /// <summary>更新结果。</summary>
 +    public class UpdateResult
@@ -1049,6 +1051,13 @@ index 0000000..aeb818e
 +        public List<string> Deleted { get; } = []; // 删除成功
 +        public List<string> DeleteFailed { get; } = []; // 删除失败
 +        public string? Error { get; set; } // 致命错误
++    }
++
++    /// <summary>清单中的单个模组条目。</summary>
++    private class ModEntry
++    {
++        public string Name { get; init; } = "";
++        public List<string> Sources { get; init; } = [];
 +    }
 +
 +    /// <summary>获取实例对应的 mods 文件夹（应用版本隔离）。</summary>
@@ -1073,7 +1082,7 @@ index 0000000..aeb818e
 +        string manifest;
 +        try
 +        {
-+            var url = $"https://{Host}{ManifestPath}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
++            var url = $"https://{ApiBase}{ManifestPath}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
 +            manifest = await HttpRequest.GetStringAsync(url).WaitAsync(TimeSpan.FromSeconds(45), ct);
 +        }
 +        catch (Exception ex)
@@ -1088,20 +1097,20 @@ index 0000000..aeb818e
 +            return result;
 +        }
 +
-+        // 2. 解析清单
-+        List<string> remoteFiles = [];
++        // 2. 解析清单（兼容：纯字符串数组 / {"files":[...], "delete":[...]}，files 元素可为字符串或对象）
++        List<ModEntry> remoteFiles = [];
 +        List<string> deleteFiles = [];
 +        try
 +        {
 +            var node = JsonNode.Parse(manifest);
 +            if (node is JsonArray arr)
 +            {
-+                remoteFiles = arr.Select(x => x?.GetValue<string>() ?? "").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
++                remoteFiles = arr.Select(x => ParseEntry(x)).Where(x => x is not null).Cast<ModEntry>().ToList();
 +            }
 +            else if (node is JsonObject obj)
 +            {
 +                if (obj["files"] is JsonArray fArr)
-+                    remoteFiles = fArr.Select(x => x?.GetValue<string>() ?? "").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
++                    remoteFiles = fArr.Select(x => ParseEntry(x)).Where(x => x is not null).Cast<ModEntry>().ToList();
 +                foreach (var key in new[] { "delete", "remove" })
 +                {
 +                    if (obj[key] is JsonArray dArr)
@@ -1123,14 +1132,14 @@ index 0000000..aeb818e
 +
 +        // 3. 对比本地
 +        Directory.CreateDirectory(modsFolder);
-+        foreach (var name in remoteFiles)
++        foreach (var entry in remoteFiles)
 +        {
-+            var p = Path.Combine(modsFolder, name);
++            var p = Path.Combine(modsFolder, entry.Name);
 +            if (!File.Exists(p))
-+                result.Missing.Add(name);
++                result.Missing.Add(entry.Name);
 +        }
 +
-+        // 4. 下载缺失模组（并发）
++        // 4. 下载缺失模组（并发，多源依次尝试）
 +        if (result.Missing.Count > 0)
 +        {
 +            using var sem = new SemaphoreSlim(Concurrency);
@@ -1139,42 +1148,50 @@ index 0000000..aeb818e
 +                await sem.WaitAsync(ct);
 +                try
 +                {
-+                    var url = $"https://{Host}{ModsPrefix}{Uri.EscapeDataString(name)}";
++                    var entry = remoteFiles.FirstOrDefault(x => x.Name == name);
++                    var sources = entry?.Sources is { Count: > 0 }
++                        ? entry.Sources
++                        : [GetDefaultSource(name)];
 +                    var destPath = Path.Combine(modsFolder, name);
 +                    var partPath = destPath + ".part";
 +                    var ok = false;
 +                    string? lastError = null;
 +
-+                    for (var attempt = 0; attempt < MaxRetries && !ok; attempt++)
++                    foreach (var source in sources)
 +                    {
-+                        if (attempt > 0)
-+                            await Task.Delay(TimeSpan.FromSeconds(1 << (attempt - 1)), ct);
-+                        try
++                        if (ct.IsCancellationRequested)
++                            break;
++                        for (var attempt = 0; attempt < MaxRetries && !ok; attempt++)
 +                        {
-+                            File.Delete(partPath);
-+                            await FileDownloader.DownloadAsync(url, partPath, useBrowserUserAgent: true).WaitAsync(TimeSpan.FromMinutes(15), ct);
-+                            if (File.Exists(partPath) && new FileInfo(partPath).Length > 0)
++                            if (attempt > 0)
++                                await Task.Delay(TimeSpan.FromSeconds(1 << (attempt - 1)), ct);
++                            try
 +                            {
-+                                File.Move(partPath, destPath, true);
-+                                ok = true;
-+                            }
-+                            else
-+                            {
++                                File.Delete(partPath);
++                                await FileDownloader.DownloadAsync(source, partPath, useBrowserUserAgent: true).WaitAsync(TimeSpan.FromMinutes(15), ct);
++                                if (File.Exists(partPath) && new FileInfo(partPath).Length > 0)
++                                {
++                                    File.Move(partPath, destPath, true);
++                                    ok = true;
++                                    break;
++                                }
 +                                lastError = Lang.Text("Setup.Service.Mods.DownloadEmpty");
 +                            }
-+                        }
-+                        catch (Exception ex)
-+                        {
-+                            lastError = ex.Message;
-+                        }
-+                        finally
-+                        {
-+                            if (File.Exists(partPath))
++                            catch (Exception ex)
 +                            {
-+                                try { File.Delete(partPath); }
-+                                catch { /* 忽略清理错误 */ }
++                                lastError = ex.Message;
++                            }
++                            finally
++                            {
++                                if (File.Exists(partPath))
++                                {
++                                    try { File.Delete(partPath); }
++                                    catch { /* 忽略清理错误 */ }
++                                }
 +                            }
 +                        }
++                        if (ok)
++                            break;
 +                    }
 +
 +                    if (ok)
@@ -1229,6 +1246,42 @@ index 0000000..aeb818e
 +        }
 +
 +        return result;
++    }
++
++    /// <summary>解析清单中的单个条目（字符串或 {name, sources} 对象）。</summary>
++    private static ModEntry? ParseEntry(JsonNode? x)
++    {
++        if (x is null)
++            return null;
++        if (x is JsonValue val)
++        {
++            var s = val.GetValue<string>();
++            return string.IsNullOrWhiteSpace(s) ? null : new ModEntry { Name = s };
++        }
++        if (x is JsonObject obj)
++        {
++            var name = obj["name"]?.GetValue<string>() ?? "";
++            if (string.IsNullOrWhiteSpace(name))
++                return null;
++            var sources = new List<string>();
++            if (obj["sources"] is JsonArray sArr)
++            {
++                foreach (var s in sArr)
++                {
++                    var url = s?.GetValue<string>() ?? "";
++                    if (!string.IsNullOrWhiteSpace(url) && !sources.Contains(url))
++                        sources.Add(url);
++                }
++            }
++            return new ModEntry { Name = name, Sources = sources };
++        }
++        return null;
++    }
++
++    /// <summary>无 sources 时的默认下载地址（GitHub raw，与清单数据仓库一致）。</summary>
++    private static string GetDefaultSource(string name)
++    {
++        return "https://raw.githubusercontent.com/maoxinhe/mzy-api/main/mods/" + Uri.EscapeDataString(name);
 +    }
 +}
 diff --git a/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs b/Plain Craft Launcher 2/Modules/Minecraft/ModDownload.cs
@@ -1326,10 +1379,10 @@ index d84d9a7..b3e9924 100644
                  if (ModMain.frmSetupLog is null)
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml
 new file mode 100644
-index 0000000..36de9ff
+index 0000000..233e329
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml	
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,79 @@
 +<local:MyPageRight
 +    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 +    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1366,7 +1419,7 @@ index 0000000..36de9ff
 +                        <local:MyTextButton x:Name="BtnWebsite" Grid.Column="1" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Center"
 +                                            Text="www.camzy.tech" Click="BtnWebsite_Click" />
 +                        <TextBlock Text="{DynamicResource Setup.Service.Info.Api}" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,25,0" />
-+                        <TextBlock x:Name="TextApi" Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="pca.camzy.tech (暂定)" />
++                        <TextBlock x:Name="TextApi" Grid.Column="1" Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="apc.camzy.uno" />
 +                        <TextBlock Text="{DynamicResource Setup.Service.Info.Contact}" Grid.Row="6" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,25,0" />
 +                        <TextBlock x:Name="TextContact" Grid.Column="1" Grid.Row="6" VerticalAlignment="Center" HorizontalAlignment="Left" Text="QQ 1096550598 / TG @maoxinhe" />
 +                    </Grid>
@@ -1397,6 +1450,13 @@ index 0000000..36de9ff
 +                        <TextBlock x:Name="TextModUpdateStatus" TextWrapping="Wrap" FontSize="14" />
 +                        <ProgressBar x:Name="ProgressModUpdate" Margin="0,10,0,0" Height="8" Minimum="0" Maximum="100" />
 +                    </StackPanel>
++                    <StackPanel x:Name="PanWhitelist" Margin="0,15,0,0">
++                        <StackPanel Orientation="Horizontal">
++                            <local:MyTextBox x:Name="InWhitelistName" Width="200" HintText="玩家名" />
++                            <local:MyButton x:Name="BtnWhitelist" Text="查询白名单" ColorType="Normal" Margin="12,0,0,0" Click="BtnWhitelist_Click" />
++                        </StackPanel>
++                        <TextBlock x:Name="TextWhitelistResult" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="13" />
++                    </StackPanel>
 +                </StackPanel>
 +            </local:MyCard>
 +        </StackPanel>
@@ -1404,11 +1464,14 @@ index 0000000..36de9ff
 +</local:MyPageRight>
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs
 new file mode 100644
-index 0000000..050cb28
+index 0000000..28b6762
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs	
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,450 @@
 +using System;
++using System.IO;
++using System.Linq;
++using System.Reflection;
 +using System.Threading.Tasks;
 +using System.Windows;
 +using System.Text.Json.Serialization;
@@ -1416,6 +1479,7 @@ index 0000000..050cb28
 +using PCL.Core.IO.Net.Http;
 +using PCL.Core.Utils;
 +using PCL.Modules.Minecraft;
++using PCL.Network;
 +
 +namespace PCL;
 +
@@ -1424,7 +1488,7 @@ index 0000000..050cb28
 +    // 梦之韵Pro 服务端配置（可按需修改）
 +    public const string McServerAddress = "remv.top:11111";
 +    public const string WebsiteUrl = "https://www.camzy.tech";
-+    public const string ApiBase = "https://cdn.camzy.tech";
++    public const string ApiBase = "https://apc.camzy.uno";
 +    public const string Contact = "QQ 1096550598 / TG @maoxinhe";
 +
 +    private bool isLoaded;
@@ -1442,6 +1506,8 @@ index 0000000..050cb28
 +        isLoaded = true;
 +        PanBack.ScrollToHome();
 +        LoadChangelogAsync();
++        LoadRemoteConfigAsync();
++        LoadNoticeAsync();
 +    }
 +
 +    private void BtnCopyServer_Click(object sender, RoutedEventArgs e)
@@ -1456,6 +1522,12 @@ index 0000000..050cb28
 +
 +    private async void BtnMods_Click(object sender, RoutedEventArgs e)
 +    {
++        if (!ModAutoUpdater.IsEnabled)
++        {
++            ModMain.MyMsgBox("模组更新功能当前未开放，请等待服务器维护完成。", "梦之韵Pro", isWarn: true);
++            return;
++        }
++
 +        // 定位当前选中的 Minecraft 实例
 +        var instance = ModInstanceList.McMcInstanceSelected;
 +        if (instance is null)
@@ -1509,10 +1581,123 @@ index 0000000..050cb28
 +        }
 +    }
 +
-+    private void BtnPack_Click(object sender, RoutedEventArgs e)
++    /// <summary>
++    ///     一键安装整合包：从 API 拉取整合包列表 → 多源下载到启动器目录 → 重启启动器自动安装。
++    /// </summary>
++    private async void BtnPack_Click(object sender, RoutedEventArgs e)
 +    {
-+        // 整合包下载入口：打开官网整合包页面（可按需修改）
-+        ModBase.OpenWebsite(WebsiteUrl);
++        try
++        {
++            var packs = await HttpRequest.GetJsonAsync<PackListModel>(ApiBase + "/api/packs");
++            var list = packs?.Packs?.Where(p => !string.IsNullOrWhiteSpace(p.Download)).ToList() ?? [];
++            if (list.Count == 0)
++            {
++                ModMain.MyMsgBox("服务器暂未开放整合包，请稍后再试。", "梦之韵Pro", isWarn: true);
++                return;
++            }
++
++            var desc = string.Join("\n", list.Select(p => $"【{p.Name}】v{p.Version}（{p.Minecraft} {p.Loader}）\n{p.Description}"));
++            ModMain.MyMsgBox("即将下载以下整合包并自动安装：\n\n" + desc,
++                "梦之韵Pro · 整合包安装",
++                button2: "开始下载",
++                button2Action: () => _ = DownloadAndInstallPackAsync(list[0]));
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 拉取整合包列表失败");
++            ModMain.MyMsgBox("获取整合包列表失败：" + ex.Message, "梦之韵Pro", isWarn: true);
++        }
++    }
++
++    private async Task DownloadAndInstallPackAsync(PackInfoModel pack)
++    {
++        var target = Path.Combine(ModBase.exePath, "modpack.zip");
++        var partPath = target + ".part";
++        try
++        {
++            var sources = pack.Sources?.Where(s => !string.IsNullOrWhiteSpace(s)).ToList() ?? [];
++            if (sources.Count == 0) sources = [pack.Download];
++            var ok = false;
++            string? lastError = null;
++            foreach (var source in sources)
++            {
++                try
++                {
++                    File.Delete(partPath);
++                    await FileDownloader.DownloadAsync(source, partPath, useBrowserUserAgent: true).WaitAsync(TimeSpan.FromMinutes(30));
++                    if (File.Exists(partPath) && new FileInfo(partPath).Length > 0)
++                    {
++                        File.Move(partPath, target, true);
++                        ok = true;
++                        break;
++                    }
++                    lastError = "下载文件为空";
++                }
++                catch (Exception ex)
++                {
++                    lastError = ex.Message;
++                }
++                finally
++                {
++                    if (File.Exists(partPath))
++                    {
++                        try { File.Delete(partPath); } catch { /* 忽略 */ }
++                    }
++                }
++            }
++
++            if (!ok)
++            {
++                ModMain.MyMsgBox("整合包下载失败：" + lastError + "\n可稍后重试或到官网手动下载。", "梦之韵Pro", isWarn: true);
++                return;
++            }
++
++            ModMain.MyMsgBox("整合包下载完成，将在下次启动启动器时自动安装。\n你也可以手动重启启动器立即安装。",
++                "梦之韵Pro · 整合包安装",
++                button2: "知道了");
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 整合包下载失败");
++            ModMain.MyMsgBox("整合包下载失败：" + ex.Message, "梦之韵Pro", isWarn: true);
++        }
++    }
++
++    /// <summary>白名单查询：GET {ApiBase}/api/whitelist/check?name=...</summary>
++    private async void BtnWhitelist_Click(object sender, RoutedEventArgs e)
++    {
++        var name = InWhitelistName.Text?.Trim() ?? "";
++        if (name.Length == 0)
++        {
++            ModMain.MyMsgBox("请先输入要查询的玩家名。", "梦之韵Pro", isWarn: true);
++            return;
++        }
++
++        BtnWhitelist.IsEnabled = false;
++        TextWhitelistResult.Text = "正在查询…";
++        try
++        {
++            var result = await HttpRequest.GetJsonAsync<WhitelistCheckModel>(
++                ApiBase + "/api/whitelist/check?name=" + Uri.EscapeDataString(name));
++            if (result is null || !result.Ok)
++            {
++                TextWhitelistResult.Text = "查询失败：" + (result?.Error ?? "未知错误");
++                return;
++            }
++
++            TextWhitelistResult.Text = result.Whitelisted
++                ? $"玩家「{result.Name}」已在白名单内，可以正常游玩。" + (result.Total > 0 ? $"（当前白名单共 {result.Total} 人）" : "")
++                : $"玩家「{result.Name}」不在白名单内，请联系管理团队申请加入（{Contact}）。";
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 白名单查询失败");
++            TextWhitelistResult.Text = "查询失败：" + ex.Message;
++        }
++        finally
++        {
++            BtnWhitelist.IsEnabled = true;
++        }
 +    }
 +
 +    private void BtnTutorial_Click(object sender, RoutedEventArgs e)
@@ -1550,6 +1735,86 @@ index 0000000..050cb28
 +        }
 +    }
 +
++    /// <summary>
++    ///     拉取远程配置：功能开关 + 版本更新检查。
++    ///     接口：GET {ApiBase}/api/launcher/config
++    /// </summary>
++    private async void LoadRemoteConfigAsync()
++    {
++        try
++        {
++            var cfg = await HttpRequest.GetJsonAsync<LauncherConfigModel>(ApiBase + "/api/launcher/config");
++            if (cfg is null)
++                return;
++
++            // 功能开关
++            if (cfg.Features is not null)
++            {
++                ModAutoUpdater.IsEnabled = cfg.Features.ModUpdater;
++                BtnPack.IsEnabled = cfg.Features.PackInstaller;
++                if (!cfg.Features.ModUpdater)
++                {
++                    BtnMods.ToolTip = "模组更新功能暂未开放";
++                }
++            }
++
++            // 版本更新检查
++            var localVersion = GetLocalVersion();
++            if (!string.IsNullOrWhiteSpace(cfg.Version) && !string.IsNullOrWhiteSpace(localVersion)
++                && !cfg.Version.Equals(localVersion, StringComparison.OrdinalIgnoreCase)
++                && cfg.Version.TrimStart('v', 'V') != localVersion.TrimStart('v', 'V'))
++            {
++                var url = cfg.ReleasePage;
++                ModMain.MyMsgBox(
++                    $"发现新版本 {cfg.Version}（当前 {localVersion}）。\n本次更新内容可在「服务」页更新日志查看。",
++                    "梦之韵Pro 更新",
++                    button2: "前往下载",
++                    button2Action: () => { if (!string.IsNullOrWhiteSpace(url)) ModBase.OpenWebsite(url); });
++            }
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 拉取远程配置失败");
++        }
++    }
++
++    /// <summary>
++    ///     拉取弹窗公告并展示（每次启动一次）。
++    ///     接口：GET {ApiBase}/api/notice
++    /// </summary>
++    private async void LoadNoticeAsync()
++    {
++        try
++        {
++            var notice = await HttpRequest.GetJsonAsync<NoticeModel>(ApiBase + "/api/notice");
++            if (notice is null || !notice.Enabled || string.IsNullOrWhiteSpace(notice.Title) || string.IsNullOrWhiteSpace(notice.Content))
++                return;
++
++            var url = notice.ButtonUrl;
++            ModMain.MyMsgBox(notice.Content, notice.Title,
++                button2: string.IsNullOrWhiteSpace(notice.ButtonText) ? "确定" : notice.ButtonText,
++                button2Action: () => { if (!string.IsNullOrWhiteSpace(url)) ModBase.OpenWebsite(url); });
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 拉取公告失败");
++        }
++    }
++
++    private static string GetLocalVersion()
++    {
++        try
++        {
++            var v = Assembly.GetExecutingAssembly().GetName().Version;
++            if (v is null) return "";
++            return $"v{v.Major}.{v.Minor}.{v.Build}";
++        }
++        catch
++        {
++            return "";
++        }
++    }
++
 +    public class ChangelogModel
 +    {
 +        [JsonPropertyName("launcher")] public string? Launcher { get; set; }
@@ -1569,6 +1834,88 @@ index 0000000..050cb28
 +
 +        [JsonIgnore]
 +        public string ContentText => Content is null ? string.Empty : string.Join("\n", Content);
++    }
++
++    public class LauncherConfigModel
++    {
++        [JsonPropertyName("version")] public string? Version { get; set; }
++
++        [JsonPropertyName("minimum_version")] public string? MinimumVersion { get; set; }
++
++        [JsonPropertyName("mandatory_update")] public bool MandatoryUpdate { get; set; }
++
++        [JsonPropertyName("downloads")] public Dictionary<string, string>? Downloads { get; set; }
++
++        [JsonPropertyName("release_page")] public string? ReleasePage { get; set; }
++
++        [JsonPropertyName("features")] public FeatureFlagsModel? Features { get; set; }
++    }
++
++    public class FeatureFlagsModel
++    {
++        [JsonPropertyName("mod_updater")] public bool ModUpdater { get; set; } = true;
++
++        [JsonPropertyName("notice_popup")] public bool NoticePopup { get; set; } = true;
++
++        [JsonPropertyName("server_status")] public bool ServerStatus { get; set; } = true;
++
++        [JsonPropertyName("pack_installer")] public bool PackInstaller { get; set; } = true;
++    }
++
++    public class NoticeModel
++    {
++        [JsonPropertyName("enabled")] public bool Enabled { get; set; }
++
++        [JsonPropertyName("title")] public string? Title { get; set; }
++
++        [JsonPropertyName("content")] public string? Content { get; set; }
++
++        [JsonPropertyName("button_text")] public string? ButtonText { get; set; }
++
++        [JsonPropertyName("button_url")] public string? ButtonUrl { get; set; }
++
++        [JsonPropertyName("once_per_session")] public bool OncePerSession { get; set; }
++    }
++
++    public class PackListModel
++    {
++        [JsonPropertyName("ok")] public bool Ok { get; set; }
++
++        [JsonPropertyName("total")] public int Total { get; set; }
++
++        [JsonPropertyName("packs")] public List<PackInfoModel>? Packs { get; set; }
++    }
++
++    public class PackInfoModel
++    {
++        [JsonPropertyName("id")] public string? Id { get; set; }
++
++        [JsonPropertyName("name")] public string? Name { get; set; }
++
++        [JsonPropertyName("version")] public string? Version { get; set; }
++
++        [JsonPropertyName("minecraft")] public string? Minecraft { get; set; }
++
++        [JsonPropertyName("loader")] public string? Loader { get; set; }
++
++        [JsonPropertyName("download")] public string? Download { get; set; }
++
++        [JsonPropertyName("sources")] public List<string>? Sources { get; set; }
++
++        [JsonPropertyName("description")] public string? Description { get; set; }
++    }
++
++    public class WhitelistCheckModel
++    {
++        [JsonPropertyName("ok")] public bool Ok { get; set; }
++
++        [JsonPropertyName("name")] public string? Name { get; set; }
++
++        [JsonPropertyName("whitelisted")] public bool Whitelisted { get; set; }
++
++        [JsonPropertyName("total")] public int Total { get; set; }
++
++        [JsonPropertyName("error")] public string? Error { get; set; }
 +    }
 +}
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs
@@ -1631,10 +1978,10 @@ index 3415d7a..82a2704 100644
                      if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
                          TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
 diff --git a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj
-index 92f84ca..94d9779 100644
+index 92f84ca..c85ce3e 100644
 --- a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
 +++ b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
-@@ -24,10 +24,10 @@
+@@ -24,12 +24,12 @@
          <ImplicitUsings>enable</ImplicitUsings>
          <ApplicationManifest>app.manifest</ApplicationManifest>
          <ApplicationIcon>Images\icon.ico</ApplicationIcon>
@@ -1642,13 +1989,17 @@ index 92f84ca..94d9779 100644
 -        <Description>Minecraft 启动器 (作者: 龙腾猫跃; 经社区二次开发版本)</Description>
 -        <Product>Plain Craft Launcher Community Edition</Product>
 -        <Copyright>Copyright © 龙腾猫跃 2016. All Rights Reserved.</Copyright>
+-        <AssemblyVersion>2.15.1.0</AssemblyVersion>
+-        <FileVersion>2.15.1.0</FileVersion>
 +        <AssemblyTitle>梦之韵Pro</AssemblyTitle>
 +        <Description>Minecraft 启动器 (梦之韵Pro，基于 Plain Craft Launcher 社区版二次开发)</Description>
 +        <Product>梦之韵Pro</Product>
 +        <Copyright>Copyright © 梦之韵团队. All Rights Reserved.</Copyright>
-         <AssemblyVersion>2.15.1.0</AssemblyVersion>
-         <FileVersion>2.15.1.0</FileVersion>
++        <AssemblyVersion>2.15.8.0</AssemblyVersion>
++        <FileVersion>2.15.8.0</FileVersion>
          <NoWarn>
+             41999;42016;42017;42018;42019;42020;42021;42022;42032;42036;42314;
+             VSTHRD002;VSTHRD003;VSTHRD110;VSTHRD200
 diff --git a/Plain Craft Launcher 2/metadata.json b/Plain Craft Launcher 2/metadata.json
 index 85aeee9..c3fd1ca 100644
 --- a/Plain Craft Launcher 2/metadata.json	
