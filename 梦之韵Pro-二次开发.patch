@@ -957,7 +957,7 @@ index fde8104..60eb6a1 100644
              _ => ((int)theme, 0, 0)
  #else
 diff --git a/Plain Craft Launcher 2/FormMain.xaml b/Plain Craft Launcher 2/FormMain.xaml
-index eeef4f4..1e9e73f 100644
+index eeef4f4..5afdf89 100644
 --- a/Plain Craft Launcher 2/FormMain.xaml	
 +++ b/Plain Craft Launcher 2/FormMain.xaml	
 @@ -10,7 +10,7 @@
@@ -969,11 +969,34 @@ index eeef4f4..1e9e73f 100644
      ScrollViewer.VerticalScrollBarVisibility="Disabled" Icon="/Plain Craft Launcher 2;component/Images/icon.ico"
      ResizeMode="CanResize" Background="{x:Null}" d:DesignWidth="870" d:DesignHeight="520" Width="850" Height="500"
      WindowStartupLocation="CenterScreen" WindowStyle="SingleBorderWindow" AllowsTransparency="False">
+@@ -170,6 +170,10 @@
+                                                  Check="BtnTitleSelect_Click"
+                                                  LogoScale="1"
+                                                  SvgIcon="lucide/wrench" />
++                            <local:MyRadioButton x:Name="BtnTitleSelect4" Text="关于" Tag="4" Margin="5,0" Padding="2,0"
++                                                 Check="BtnTitleSelect_Click"
++                                                 LogoScale="1"
++                                                 SvgIcon="lucide/info" />
+                         </StackPanel>
+                     </Grid>
+                     <Grid x:Name="PanTitleInner" Visibility="Collapsed" Margin="-16,0,0,0" Opacity="0"
 diff --git a/Plain Craft Launcher 2/FormMain.xaml.cs b/Plain Craft Launcher 2/FormMain.xaml.cs
-index 0cc260c..1caf9d3 100644
+index 0cc260c..2cad673 100644
 --- a/Plain Craft Launcher 2/FormMain.xaml.cs	
 +++ b/Plain Craft Launcher 2/FormMain.xaml.cs	
-@@ -1451,6 +1451,7 @@ public partial class FormMain
+@@ -1379,6 +1379,11 @@ public partial class FormMain
+         /// </summary>
+         Setup = 2,
+ 
++        /// <summary>
++        ///     关于（梦之韵Pro 顶级页签）。
++        /// </summary>
++        About = 4,
++
+         /// <summary>
+         ///     实例选择。这是一个副页面。
+         /// </summary>
+@@ -1451,6 +1456,7 @@ public partial class FormMain
          SetupJava = 9,
          SetupLauncherMisc = 10,
          SetupLauncherLanguage = 11,
@@ -981,11 +1004,82 @@ index 0cc260c..1caf9d3 100644
  
          ToolsGameLink = 1,
          ToolsTest = 3,
+@@ -1690,6 +1696,20 @@ public partial class FormMain
+ 
+                     break;
+                 }
++                case PageType.About:
++                {
++                    if (ModMain.frmAboutLeft is null)
++                        ModMain.frmAboutLeft = new PageAboutLeft();
++                    foreach (var item in ModMain.frmAboutLeft.PanItem.Children)
++                        if (item is MyListItem listItem &&
++                            ModBase.Val(listItem.Tag) == (double)subType)
++                        {
++                            listItem.SetChecked(true, true, stack == pageCurrent);
++                            break;
++                        }
++
++                    break;
++                }
+                 case PageType.Setup:
+                 {
+                     if (ModMain.frmSetupLeft is null)
+@@ -1864,6 +1884,13 @@ public partial class FormMain
+                         PageChangeAnim(ModMain.frmToolsLeft, (FrameworkElement)ModMain.frmToolsLeft.PageGet(subType));
+                         break;
+                     }
++                case PageType.About: // 关于（梦之韵Pro 服务/软件信息/软件更新/反馈）
++                    {
++                        ModMain.frmAboutLeft ??= new PageAboutLeft();
++                        subType = ModMain.frmAboutLeft.pageID;
++                        PageChangeAnim(ModMain.frmAboutLeft, (FrameworkElement)ModMain.frmAboutLeft.PageGet(subType));
++                        break;
++                    }
+                 case PageType.Setup: // 设置
+                     {
+                         ModMain.frmSetupLeft ??= new PageSetupLeft();
 diff --git a/Plain Craft Launcher 2/Modules/Base/ModSetup.cs b/Plain Craft Launcher 2/Modules/Base/ModSetup.cs
-index f586cf9..d799bb4 100644
+index f586cf9..eaafe45 100644
 --- a/Plain Craft Launcher 2/Modules/Base/ModSetup.cs	
 +++ b/Plain Craft Launcher 2/Modules/Base/ModSetup.cs	
-@@ -498,14 +498,14 @@ public class ModSetup
+@@ -120,6 +120,8 @@ public class ModSetup
+ 
+         // UI - Launcher
+         UiLauncherTransparent(Config.Preference.Theme.WindowOpacity);
++        // 梦之韵Pro：旧版本持久化的蓝色主题统一迁移为淡粉（默认主题为淡粉）
++        MigrateLegacyBlueTheme();
+         UiLauncherTheme(Config.Preference.Theme.ThemeSelected);
+         UiBackgroundColorful(Config.Preference.Background.BackgroundColorful);
+         UiLockWindowSize(Config.Preference.LockWindowSize);
+@@ -229,6 +231,26 @@ public class ModSetup
+         ModMain.frmMain.Opacity = value / 1000d + 0.4d;
+     }
+ 
++    /// <summary>
++    ///     梦之韵Pro：将旧版本持久化的蓝色主题迁移为默认淡粉主题。
++    ///     仅当当前主题仍是蓝色系（用户未主动选择粉色）时执行，避免覆盖用户手动选择。
++    /// </summary>
++    private static void MigrateLegacyBlueTheme()
++    {
++        try
++        {
++            var theme = Config.Preference.Theme;
++            if (theme.LightColor is ColorTheme.SkyBlue or ColorTheme.CatBlue or ColorTheme.DeathBlue or ColorTheme.HmclBlue)
++                theme.LightColorConfig.SetValue(ColorTheme.Pink);
++            if (theme.DarkColor is ColorTheme.SkyBlue or ColorTheme.CatBlue or ColorTheme.DeathBlue or ColorTheme.HmclBlue)
++                theme.DarkColorConfig.SetValue(ColorTheme.Pink);
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(ex, "[梦之韵Pro] 主题迁移失败");
++        }
++    }
++
+     public static void UiLauncherTheme(int value)
+     {
+         ThemeManager.ThemeRefresh(value);
+@@ -498,14 +520,14 @@ public class ModSetup
  
                  break;
              }
@@ -1298,10 +1392,17 @@ index 4d3ba6f..6ddad43 100644
              }
  
 diff --git a/Plain Craft Launcher 2/Modules/ModMain.cs b/Plain Craft Launcher 2/Modules/ModMain.cs
-index efdb3cb..2c3feef 100644
+index efdb3cb..9550518 100644
 --- a/Plain Craft Launcher 2/Modules/ModMain.cs	
 +++ b/Plain Craft Launcher 2/Modules/ModMain.cs	
-@@ -62,6 +62,7 @@ public static class ModMain
+@@ -56,12 +56,14 @@ public static class ModMain
+     public static PageDownloadWorld? frmDownloadWorld;
+     public static PageDownloadCompFavorites? frmDownloadCompFavorites;
+     public static PageSetupLeft? frmSetupLeft;
++    public static PageAboutLeft? frmAboutLeft;
+     public static PageSetupLaunch? frmSetupLaunch;
+     public static PageSetupUI? frmSetupUI;
+     public static PageSetupGameManage? frmSetupGameManage;
      public static PageSetupUpdate? frmSetupUpdate;
      public static PageSetupJava? frmSetupJava;
      public static PageSetupAbout? frmSetupAbout;
@@ -1324,6 +1425,215 @@ index 7bb7e6c..966c8e1 100644
          {
              ModAnimation.AniDispose(PanHint, true);
              States.Hint.CEMessage = false;
+diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml
+new file mode 100644
+index 0000000..613e9b1
+--- /dev/null
++++ b/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml	
+@@ -0,0 +1,50 @@
++<local:MyPageLeft x:Class="PCL.PageAboutLeft"
++                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
++                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
++                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
++                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
++                  xmlns:local="clr-namespace:PCL"
++                  mc:Ignorable="d">
++    <StackPanel Orientation="Vertical" x:Name="PanItem" Margin="0,12,0,0">
++
++        <TextBlock Text="梦之韵Pro" Margin="13,5,5,3" Opacity="0.6" FontSize="12" x:Name="TextAboutCategory" />
++
++        <local:MyListItem x:Name="ItemService"
++                          IsScaleAnimationEnabled="False"
++                          Type="RadioBox" Tag="12"
++                          Check="PageCheck"
++                          MinPaddingRight="35" Height="36"
++                          VerticalAlignment="Top"
++                          Title="{DynamicResource Setup.Left.Item.Service}"
++                          LogoScale="0.9"
++                          SvgIcon="lucide/server" />
++        <local:MyListItem x:Name="ItemAbout"
++                          IsScaleAnimationEnabled="False"
++                          Type="RadioBox" Tag="4"
++                          Check="PageCheck"
++                          MinPaddingRight="35" Height="36"
++                          VerticalAlignment="Top"
++                          Title="{DynamicResource Setup.Left.Item.About}"
++                          LogoScale="0.9"
++                          SvgIcon="lucide/info" />
++        <local:MyListItem x:Name="ItemUpdate"
++                          IsScaleAnimationEnabled="False"
++                          Type="RadioBox" Tag="8"
++                          Check="PageCheck"
++                          MinPaddingRight="35" Height="36"
++                          VerticalAlignment="Top"
++                          Title="{DynamicResource Setup.Left.Item.Update}"
++                          LogoScale="0.9"
++                          SvgIcon="lucide/refresh-cw" />
++        <local:MyListItem x:Name="ItemFeedback"
++                          IsScaleAnimationEnabled="False"
++                          Type="RadioBox" Tag="6"
++                          Check="PageCheck"
++                          MinPaddingRight="35" Height="36"
++                          VerticalAlignment="Top"
++                          Title="{DynamicResource Setup.Left.Item.Feedback}"
++                          LogoScale="0.9"
++                          SvgIcon="lucide/message-circle" />
++
++    </StackPanel>
++</local:MyPageLeft>
+diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml.cs
+new file mode 100644
+index 0000000..fda70e5
+--- /dev/null
++++ b/Plain Craft Launcher 2/Pages/PageSetup/PageAboutLeft.xaml.cs	
+@@ -0,0 +1,147 @@
++using System.Windows;
++using System.Windows.Controls;
++using PCL.Core.App;
++using PCL.Core.App.Localization;
++
++namespace PCL;
++
++/// <summary>
++///     梦之韵Pro 顶级「关于」页左侧导航（与启动/下载/设置/工具并排）。
++///     子页面复用设置页内已有页面：服务 / 软件信息 / 软件更新 / 反馈。
++/// </summary>
++public partial class PageAboutLeft
++{
++    private bool isLoad;
++    private bool isPageSwitched; // 如果在 Loaded 前切换到其他页面，会导致触发 Loaded 时再次切换一次
++
++    public PageAboutLeft()
++    {
++        InitializeComponent();
++        AnimatedControl = PanItem;
++        Loaded += PageAboutLeft_Loaded;
++        Unloaded += PageAboutLeft_Unloaded;
++    }
++
++    private void PageAboutLeft_Loaded(object sender, RoutedEventArgs e)
++    {
++        if (isLoad)
++            return;
++        isLoad = true;
++        if (isPageSwitched)
++            return;
++        // 默认选中「梦之韵Pro 服务」
++        ItemService.SetChecked(true, false, false);
++    }
++
++    private void PageAboutLeft_Unloaded(object sender, RoutedEventArgs e)
++    {
++        isPageSwitched = false;
++    }
++
++    #region 页面切换
++
++    /// <summary>
++    ///     当前页面的编号。
++    /// </summary>
++    public FormMain.PageSubType pageID = FormMain.PageSubType.SetupService;
++
++    /// <summary>
++    ///     勾选事件改变页面。
++    /// </summary>
++    private void PageCheck(object senderRaw, ModBase.RouteEventArgs e)
++    {
++        var sender = (MyListItem)senderRaw;
++        if (sender.Tag is not null)
++            PageChange((FormMain.PageSubType)ModBase.Val(sender.Tag));
++    }
++
++    public object PageGet(FormMain.PageSubType? id = null)
++    {
++        var targetID = id ?? pageID;
++        switch (targetID)
++        {
++            case FormMain.PageSubType.SetupService:
++            {
++                if (ModMain.frmSetupService is null)
++                    ModMain.frmSetupService = new PageSetupService();
++                return ModMain.frmSetupService;
++            }
++            case FormMain.PageSubType.SetupAbout:
++            {
++                if (ModMain.frmSetupAbout is null)
++                    ModMain.frmSetupAbout = new PageSetupAbout();
++                return ModMain.frmSetupAbout;
++            }
++            case FormMain.PageSubType.SetupUpdate:
++            {
++                if (ModMain.frmSetupUpdate is null)
++                    ModMain.frmSetupUpdate = new PageSetupUpdate();
++                return ModMain.frmSetupUpdate;
++            }
++            case FormMain.PageSubType.SetupFeedback:
++            {
++                if (ModMain.frmSetupFeedback is null)
++                    ModMain.frmSetupFeedback = new PageSetupFeedback();
++                return ModMain.frmSetupFeedback;
++            }
++            default:
++            {
++                throw new Exception("未知的关于子页面种类：" + (int)targetID);
++            }
++        }
++    }
++
++    /// <summary>
++    ///     切换现有页面。
++    /// </summary>
++    public void PageChange(FormMain.PageSubType id)
++    {
++        if (pageID == id)
++            return;
++        ModAnimation.AniControlEnabled += 1;
++        isPageSwitched = true;
++        try
++        {
++            PageChangeRun((MyPageRight)PageGet(id));
++            pageID = id;
++        }
++        catch (Exception ex)
++        {
++            ModBase.Log(
++                ex,
++                $"切换关于子页面失败（ID {(int)id}）",
++                ModBase.LogLevel.Feedback,
++                userSummary: Lang.Text("Tools.Error.OperationFailed"));
++        }
++        finally
++        {
++            ModAnimation.AniControlEnabled -= 1;
++        }
++    }
++
++    private static void PageChangeRun(MyPageRight target)
++    {
++        ModAnimation.AniStop("FrmMain PageChangeRight"); // 停止主页面的右页面切换动画，防止它与本动画一起触发多次 PageOnEnter
++        if (target.Parent is not null)
++            target.SetValue(ContentPresenter.ContentProperty, null);
++        ModMain.frmMain.pageRight = target;
++        ((MyPageRight)ModMain.frmMain.PanMainRight.Child).PageOnExit();
++        ModAnimation.AniStart(new[]
++        {
++            ModAnimation.AaCode(() =>
++            {
++                ((MyPageRight)ModMain.frmMain.PanMainRight.Child).PageOnForceExit();
++                ModMain.frmMain.PanMainRight.Child = ModMain.frmMain.pageRight;
++                ModMain.frmMain.pageRight.Opacity = 0d;
++            }, 130),
++            ModAnimation.AaCode(() =>
++            {
++                // 延迟触发页面通用动画，以使得在 Loaded 事件中加载的控件得以处理
++                ModMain.frmMain.pageRight.Opacity = 1d;
++                ModMain.frmMain.pageRight.PageOnEnter();
++            }, 30, true)
++        }, "PageLeft PageChange");
++    }
++
++    #endregion
++}
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml
 index 06b898c..7fdb774 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml	
@@ -1345,6 +1655,69 @@ index 06b898c..7fdb774 100644
                          local:CustomEventService.EventType="OpenUrl"
                          Text="{DynamicResource Setup.About.GitHubHome}" />
                      <local:MyButton
+diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml.cs
+index 46437bf..6edb8e6 100644
+--- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml.cs	
++++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupAbout.xaml.cs	
+@@ -45,27 +45,7 @@ public partial class PageSetupAbout
+             RowMcmod.Height = new GridLength(0);
+         }
+ 
+-        LoadContributersAsync();
+-    }
+-
+-    private async void LoadContributersAsync()
+-    {
+-        try
+-        {
+-            using (var response = await HttpRequest
+-                       .Create("https://api.github.com/repos/PCL-Community/PCL2-CE/contributors").SendAsync())
+-            {
+-                response.EnsureSuccessStatusCode();
+-                var cos = await response.AsJsonAsync<List<GitHubContributor>>(JsonCompat.SerializerOptions);
+-                Contributors.Clear();
+-                foreach (var item in cos)
+-                    Contributors.Add((GitHubContributor)item);
+-            }
+-        }
+-        catch (Exception ex)
+-        {
+-            ModBase.Log(ex, Lang.Text("Setup.About.Error.LoadContributorsFailed"));
+-        }
++        // 梦之韵Pro：不再请求 GitHub 贡献者列表（国内访问慢，避免卡顿）
+     }
+ 
+     private void ImgPCLCommunity_Click(object sender, MouseButtonEventArgs e)
+diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupFeedback.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupFeedback.xaml.cs
+index 022da0f..627c71d 100644
+--- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupFeedback.xaml.cs	
++++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupFeedback.xaml.cs	
+@@ -48,13 +48,14 @@ public partial class PageSetupFeedback
+ 
+     private void PageOtherFeedback_Loaded(object sender, RoutedEventArgs e)
+     {
+-        PageLoaderInit(Load, PanLoad, PanContent, PanInfo, Loader, _ => RefreshList());
++        // 梦之韵Pro：反馈统一走玩家门户工单系统，不再加载官方 GitHub Issues（国内访问慢）
+         // 重复加载部分
+         PanBack.ScrollToHome();
+         // 非重复加载部分
+         if (_isLoaded)
+             return;
+         _isLoaded = true;
++        PanContent.Visibility = Visibility.Collapsed;
+     }
+ 
+     public void FeedbackListGet(ModLoader.LoaderTask<bool, List<Feedback>> task)
+@@ -173,7 +174,8 @@ public partial class PageSetupFeedback
+ 
+     private void Feedback_Click(object sender, MouseButtonEventArgs e)
+     {
+-        PageSetupLeft.TryFeedback();
++        // 梦之韵Pro：打开玩家门户工单中心（反馈/举报/建议统一走工单系统）
++        ModBase.OpenWebsite("https://player.camzy.uno/#tickets");
+     }
+ 
+     public class Feedback
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupLeft.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupLeft.xaml
 index 9acdae8..a14ebfd 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupLeft.xaml	
@@ -1473,7 +1846,7 @@ index 0000000..0191595
 +</local:MyPageRight>
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs
 new file mode 100644
-index 0000000..4a4dbff
+index 0000000..bd9fd55
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs	
 @@ -0,0 +1,465 @@
@@ -1840,11 +2213,11 @@ index 0000000..4a4dbff
 +
 +    private static string GetLocalVersion()
 +    {
++        // 梦之韵Pro：与发布版本号保持一致（如 v2.15.11-mzy.11），避免更新误判
 +        try
 +        {
-+            var v = Assembly.GetExecutingAssembly().GetName().Version;
-+            if (v is null) return "";
-+            return $"v{v.Major}.{v.Minor}.{v.Build}";
++            var name = ModBase.versionBaseName;
++            return string.IsNullOrWhiteSpace(name) ? "" : "v" + name;
 +        }
 +        catch
 +        {
@@ -1943,7 +2316,7 @@ index 0000000..4a4dbff
 +    }
 +}
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs
-index 614b0a5..c70e2ba 100644
+index 614b0a5..ee6682d 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs	
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs	
 @@ -13,8 +13,8 @@ namespace PCL;
@@ -1957,6 +2330,35 @@ index 614b0a5..c70e2ba 100644
      
      public new bool isLoaded;
  
+@@ -834,25 +834,17 @@ public partial class PageSetupUI
+             // 工具子页面 (FrmToolsLeft)
+             if (ModMain.frmToolsLeft is not null)
+             {
+-                ModMain.frmToolsLeft.ItemGameLink.Visibility = !HiddenForceShow && conf.ToolsGameLink
+-                    ? Visibility.Collapsed
+-                    : Visibility.Visible;
++                // 梦之韵Pro：第三方联机大厅已移除，工具页仅保留本地小工具
+                 ModMain.frmToolsLeft.ItemTest.Visibility =
+                     !HiddenForceShow && conf.ToolsTest ? Visibility.Collapsed : Visibility.Visible;
+-                
+-                // 处理分类标题
+-                var isGameLinkVisible = (!HiddenForceShow && !conf.ToolsGameLink) || HiddenForceShow;
+-                ModMain.frmToolsLeft.TextGameLinkCategory.Visibility = isGameLinkVisible ? Visibility.Visible : Visibility.Collapsed;
+-                if (isGameLinkVisible) ModMain.frmToolsLeft.TextGameLinkCategory.Opacity = 0.6;
+ 
++                // 处理分类标题
+                 var isToolsVisible = (!HiddenForceShow && !conf.ToolsTest) || HiddenForceShow;
+                 ModMain.frmToolsLeft.TextToolsCategory.Visibility = isToolsVisible ? Visibility.Visible : Visibility.Collapsed;
+                 if (isToolsVisible) ModMain.frmToolsLeft.TextToolsCategory.Opacity = 0.6;
+-                
++
+                 // 统计工具页可用项数量
+                 var toolsCount = 0;
+-                if (!conf.ToolsGameLink)
+-                    toolsCount += 1;
+                 if (!conf.ToolsTest)
+                     toolsCount += 1;
+                 ModMain.frmToolsLeft.PanItem.Visibility =
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml
 index c75b7c8..f47e8af 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml	
@@ -1980,10 +2382,33 @@ index c75b7c8..f47e8af 100644
                          <TextBlock x:Name="TextCurrentDesc" Text="{DynamicResource Setup.Update.Latest}" FontSize="14" Grid.Row="2" Grid.Column="2"
                                     HorizontalAlignment="Left" VerticalAlignment="Top" />
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml.cs
-index 3415d7a..82a2704 100644
+index 3415d7a..7ece222 100644
 --- a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml.cs	
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUpdate.xaml.cs	
-@@ -26,7 +26,7 @@ public partial class PageSetupUpdate
+@@ -1,16 +1,21 @@
+ ﻿using System.Windows;
+ using System.Windows.Controls;
+ using System.Windows.Input;
++using System.Text.Json.Serialization;
+ using PCL.Core.App;
+ using PCL.Core.Utils;
+ using PCL.Core.App.Localization;
+ using PCL.Core.Utils.OS;
++using PCL.Core.IO.Net.Http;
+ 
+ namespace PCL;
+ 
+ public partial class PageSetupUpdate
+ {
+-    public VersionDataModel updateInfo;
++    // 梦之韵Pro：更新源全部走自建 Cloudflare Worker（apc），不再访问官方 GitHub 源
++    public const string ApiBase = "https://apc.camzy.uno";
++    public const string ReleasePage = "https://github.com/maoxinhe/mzy-pro/releases";
++    private LauncherInfoModel _latestInfo;
+ 
+     public PageSetupUpdate()
+     {
+@@ -26,36 +31,38 @@ public partial class PageSetupUpdate
          ComboSystemUpdateChannel.SelectedIndex = (int)Config.Update.UpdateChannel;
          ComboSystemUpdateMode.SelectedIndex = (int)Config.Update.UpdateMode;
  
@@ -1992,17 +2417,301 @@ index 3415d7a..82a2704 100644
          ModAnimation.AniControlEnabled -= 1;
          CheckUpdate();
      }
-@@ -79,7 +79,7 @@ public partial class PageSetupUpdate
-                         UpdateManager.IsCurrentVersionBeta
-                             ? UpdateChannel.beta
-                             : UpdateChannel.stable, SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64);
+ 
++    public class LauncherInfoModel
++    {
++        [JsonPropertyName("latest")] public string? Latest { get; set; }
++        [JsonPropertyName("minimum")] public string? Minimum { get; set; }
++        [JsonPropertyName("mandatory")] public bool Mandatory { get; set; }
++        [JsonPropertyName("urls")] public Dictionary<string, string>? Urls { get; set; }
++        [JsonPropertyName("release_page")] public string? ReleasePage { get; set; }
++        [JsonPropertyName("note")] public string? Note { get; set; }
++    }
++
+     private async Task<UpdateStatus> IsLatestAsync()
+     {
+         try
+         {
+-            // 修复：使用 dynamic 绕过命名空间重名导致的编译期类型冲突，
+-            // 或者你可以尝试替换为 PCL.Core.App.SemVer.Parse(ModBase.versionBaseName)
+-            if (await UpdateManager.remoteServer.IsLatestAsync(
+-                    UpdateManager.IsCurrentVersionBeta ? UpdateChannel.beta : UpdateChannel.stable,
+-                    SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64,
+-                    SemVer.Parse(ModBase.versionBaseName),
+-                    ModBase.versionCode))
+-            {
+-                ModBase.Log("[Update] 已是最新版本");
+-                return UpdateStatus.Latest;
+-            }
+-
+-            ModBase.Log("[Update] 有可用的新版本");
+-            return UpdateStatus.Available;
++            var info = await HttpRequest.GetJsonAsync<LauncherInfoModel>(ApiBase + "/launcher.json");
++            _latestInfo = info;
++            if (info is null || string.IsNullOrWhiteSpace(info.Latest))
++                return UpdateStatus.Error;
++
++            var latestClean = info.Latest.TrimStart('v', 'V');
++            var localClean = ModBase.versionBaseName.TrimStart('v', 'V');
++            ModBase.Log("[Update] 远程最新: " + info.Latest + " / 本地: " + ModBase.versionBaseName);
++            return latestClean == localClean ? UpdateStatus.Latest : UpdateStatus.Available;
+         }
+         catch (Exception ex)
+         {
+-            ModBase.Log(
+-                ex,
+-                Lang.Text("Setup.Update.Error.NetworkFailed"),
+-                ModBase.LogLevel.Hint,
++            ModBase.Log(ex, Lang.Text("Setup.Update.Error.NetworkFailed"), ModBase.LogLevel.Hint,
+                 userSummary: Lang.Text("Setup.Update.Error.NetworkFailed"));
+             return UpdateStatus.Error;
+         }
+@@ -63,7 +70,7 @@ public partial class PageSetupUpdate
+ 
+     public async void CheckUpdate()
+     {
+-        ModBase.Log("[Update] 开始检查更新");
++        ModBase.Log("[Update] 开始检查更新（数据源: " + ApiBase + "）");
+         CardUpdate.Visibility = Visibility.Collapsed;
+         CardCheck.Visibility = Visibility.Visible;
+         TextCurrentDesc.Text = Lang.Text("Setup.Update.Checking");
+@@ -72,59 +79,12 @@ public partial class PageSetupUpdate
+         {
+             case UpdateStatus.Available:
+             {
+-                Exception checkUpdateEx = null;
+-                try
+-                {
+-                    updateInfo = UpdateManager.remoteServer.GetLatestVersion(
+-                        UpdateManager.IsCurrentVersionBeta
+-                            ? UpdateChannel.beta
+-                            : UpdateChannel.stable, SystemInfo.IsArm64System ? UpdateArch.arm64 : UpdateArch.x64);
 -                    TextUpdateName.Text = "PCL CE " + VersionNameFormat(updateInfo.VersionName);
-+                    TextUpdateName.Text = "梦之韵Pro " + VersionNameFormat(updateInfo.VersionName);
-                     var summary = updateInfo.Changelog.Between("<summary>", "</summary>");
-                     if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
-                         TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
+-                    var summary = updateInfo.Changelog.Between("<summary>", "</summary>");
+-                    if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
+-                        TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
+-                    else
+-                        TextChangelog.Text = summary;
+-                }
+-                catch (Exception ex)
+-                {
+-                    checkUpdateEx = ex;
+-                }
+-
++                TextUpdateName.Text = "梦之韵Pro " + VersionNameFormat(_latestInfo.Latest!);
++                var note = _latestInfo.Note ?? "";
++                TextChangelog.Text = string.IsNullOrWhiteSpace(note) ? Lang.Text("Setup.Update.Changelog.Empty") : note;
+                 BtnCheckAgain.IsEnabled = true;
+-                if (updateInfo is null)
+-                {
+-                    TextCurrentDesc.Text = Lang.Text("Setup.Update.CheckFailed");
+-                    if (checkUpdateEx is not null)
+-                        ModBase.Log(
+-                            checkUpdateEx,
+-                            "[Update] 检查更新失败",
+-                            ModBase.LogLevel.Msgbox,
+-                            userSummary: Lang.Text("Update.Check.Failed"));
+-                    else
+-                        ModBase.Log(
+-                            "[Update] 检查更新失败",
+-                            ModBase.LogLevel.Msgbox,
+-                            userSummary: Lang.Text("Update.Check.Failed"));
+-                    return;
+-                }
+-
+-                if (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
+-                {
+-                    BtnUpdate_Timer();
+-                    BtnUpdate.IsEnabled = false;
+-                }
+-                else if (UpdateManager.isUpdateWaitingRestart)
+-                {
+-                    BtnUpdate.Text = Lang.Text("Setup.Update.RestartInstall");
+-                    BtnUpdate.IsEnabled = true;
+-                }
+-                else
+-                {
+-                    BtnUpdate.Text = Lang.Text("Setup.Update.Install");
+-                    BtnUpdate.IsEnabled = true;
+-                }
+-
++                BtnUpdate.Text = Lang.Text("Setup.Update.Install");
++                BtnUpdate.IsEnabled = true;
+                 CardUpdate.Visibility = Visibility.Visible;
+                 CardCheck.Visibility = Visibility.Collapsed;
+                 break;
+@@ -148,28 +108,22 @@ public partial class PageSetupUpdate
+         }
+     }
+ 
+-    public void BtnUpdate_Timer()
++    private void BtnUpdate_Click(object sender, MouseButtonEventArgs e)
+     {
+-        while (UpdateManager.updateLoader is not null && UpdateManager.updateLoader.State == ModBase.LoadState.Loading)
++        // 梦之韵Pro：更新走 GitHub Release 产物下载（x64 / arm64 按本机架构直链）
++        var url = ReleasePage;
++        if (_latestInfo?.Urls is not null)
+         {
+-            ModBase.RunInUi(() => BtnUpdate.Text = Lang.Number(UpdateManager.updateLoader.Progress, "P2"));
+-            Thread.Sleep(200);
++            var arch = SystemInfo.IsArm64System ? "arm64" : "x64";
++            if (_latestInfo.Urls.TryGetValue(arch, out var direct) && !string.IsNullOrWhiteSpace(direct))
++                url = direct;
+         }
+-    }
+-
+-    private void BtnUpdate_Click(object sender, MouseButtonEventArgs e)
+-    {
+-        if (UpdateManager.isUpdateWaitingRestart) UpdateManager.UpdateRestart(true);
+-        // 开始更新流程
+-        UpdateManager.UpdateStart(UpdateEnums.UpdateType.UpdateNow);
++        ModBase.OpenWebsite(url);
+     }
+ 
+     private void BtnChangelogDetail_Click(object sender, EventArgs e)
+     {
+-        if (updateInfo is null)
+-            ModMain.MyMsgBox(Lang.Text("Setup.Update.Changelog.Unavailable"), Lang.Text("Setup.Update.Changelog.Title"));
+-        else
+-            ModMain.MyMsgBoxMarkdown(updateInfo.Changelog, Lang.Text("Setup.Update.Changelog.Title"));
++        ModBase.OpenWebsite(ReleasePage);
+     }
+ 
+     private void ComboSystemUpdateMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+@@ -256,7 +210,7 @@ public partial class PageSetupUpdate
+ 
+     private void BtnChangelog_Click(object sender, MouseButtonEventArgs e)
+     {
+-        ModBase.OpenWebsite("https://github.com/PCL-Community/PCL2-CE/releases/v" + ModBase.versionBaseName);
++        ModBase.OpenWebsite(ReleasePage);
+     }
+ 
+     public string VersionNameFormat(string str)
+diff --git a/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml b/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml
+index 446d119..e843094 100644
+--- a/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml	
++++ b/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml	
+@@ -7,34 +7,6 @@
+                   mc:Ignorable="d">
+     <StackPanel Orientation="Vertical" x:Name="PanItem" Margin="0,12,0,0">
+ 
+-        <TextBlock Text="{DynamicResource Tools.Left.Multiplayer}"
+-                   Margin="13,5,5,3"
+-                   Opacity="0.6" FontSize="12"
+-                   x:Name="TextGameLinkCategory" />
+-
+-        <local:MyListItem x:Name="ItemGameLink"
+-                          IsScaleAnimationEnabled="False"
+-                          Type="RadioBox" Tag="1"
+-                          Check="PageCheck"
+-                          MinPaddingRight="35" Height="36"
+-                          VerticalAlignment="Top"
+-                          Title="{DynamicResource Tools.Left.Lobby}"
+-                          LogoScale="0.85"
+-                          SvgIcon="lucide/link-2">
+-            <local:MyListItem.Buttons>
+-                <x:Array Type="{x:Type local:MyIconButton}">
+-                    <local:MyIconButton Tag="1"
+-                                        ToolTip="{DynamicResource Common.Action.Refresh}"
+-                                        ToolTipService.Placement="Right"
+-                                        ToolTipService.InitialShowDelay="200"
+-                                        ToolTipService.VerticalOffset="-1"
+-                                        LogoScale="0.85"
+-                                        Click="Refresh"
+-                                        SvgIcon="lucide/refresh-cw" />
+-                </x:Array>
+-            </local:MyListItem.Buttons>
+-        </local:MyListItem>
+-
+         <TextBlock Text="{DynamicResource Tools.Left.Utilities}" Margin="13,5,5,3" Opacity="0.6" FontSize="12"
+                    x:Name="TextToolsCategory" />
+         <local:MyListItem x:Name="ItemTest"
+diff --git a/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml.cs b/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml.cs
+index c5df429..3ea75e8 100644
+--- a/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml.cs	
++++ b/Plain Craft Launcher 2/Pages/PageTools/PageToolsLeft.xaml.cs	
+@@ -23,7 +23,6 @@ public partial class PageToolsLeft
+         var isHiddenPage = false;
+         var hide = Config.Preference.Hide;
+ 
+-        if (ItemGameLink.Checked && hide.ToolsGameLink) isHiddenPage = true;
+         if (ItemTest.Checked && hide.ToolsTest) isHiddenPage = true;
+         if (PageSetupUI.HiddenForceShow)
+             isHiddenPage = false;
+@@ -36,13 +35,7 @@ public partial class PageToolsLeft
+         // 选择第一个未被禁用的子页面
+         if (isPageSwitched) 
+             return;
+-        var hideCfg = Config.Preference.Hide;
+-        if (!hideCfg.ToolsGameLink)
+-            ItemGameLink.SetChecked(true, false, false);
+-        else if (!hideCfg.ToolsTest)
+-            ItemTest.SetChecked(true, false, false);
+-        else
+-            ItemGameLink.SetChecked(true, false, false);
++        ItemTest.SetChecked(true, false, false);
+     }
+ 
+     private void PageOtherLeft_Unloaded(object sender, RoutedEventArgs e)
+@@ -52,21 +45,7 @@ public partial class PageToolsLeft
+ 
+     public void Refresh(object sender, EventArgs e)
+     {
+-        var button = (MyIconButton)sender;
+-        if (button.Tag is null)
+-            return;
+-        double id = ModBase.Val(button.Tag);
+-        switch (id)
+-        {
+-            case (double)FormMain.PageSubType.ToolsGameLink:
+-            {
+-                if (ModMain.frmToolsGameLink is null)
+-                    ModMain.frmToolsGameLink = new PageToolsGameLink();
+-                ModMain.frmToolsGameLink.Reload();
+-                ItemGameLink.Checked = true;
+-                break;
+-            }
+-        }
++        // 梦之韵Pro：已移除第三方联机服务，仅保留本地小工具
+     }
+ 
+     #region 页面切换
+@@ -74,7 +53,7 @@ public partial class PageToolsLeft
+     /// <summary>
+     ///     当前页面的编号。
+     /// </summary>
+-    public FormMain.PageSubType pageID = FormMain.PageSubType.ToolsGameLink;
++    public FormMain.PageSubType pageID = FormMain.PageSubType.ToolsTest;
+ 
+     /// <summary>
+     ///     勾选事件改变页面。
+@@ -91,14 +70,8 @@ public partial class PageToolsLeft
+     public object PageGet(FormMain.PageSubType? id = null)
+     {
+         var targetID = id ?? pageID;
+-        switch (id)
++        switch (targetID)
+         {
+-            case FormMain.PageSubType.ToolsGameLink:
+-            {
+-                if (ModMain.frmToolsGameLink is null)
+-                    ModMain.frmToolsGameLink = new PageToolsGameLink();
+-                return ModMain.frmToolsGameLink;
+-            }
+             case FormMain.PageSubType.ToolsTest:
+             {
+                 if (ModMain.frmToolsTest is null)
+@@ -107,7 +80,7 @@ public partial class PageToolsLeft
+             }
+             default:
+             {
+-                throw new Exception("未知的更多子页面种类：" + (int)id);
++                throw new Exception("未知的更多子页面种类：" + (int)targetID);
+             }
+         }
+     }
 diff --git a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj
-index 92f84ca..3a627af 100644
+index 92f84ca..2f0cd62 100644
 --- a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
 +++ b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
 @@ -24,12 +24,12 @@
@@ -2019,19 +2728,32 @@ index 92f84ca..3a627af 100644
 +        <Description>Minecraft 启动器 (梦之韵Pro，基于 Plain Craft Launcher 社区版二次开发)</Description>
 +        <Product>梦之韵Pro</Product>
 +        <Copyright>Copyright © 梦之韵团队. All Rights Reserved.</Copyright>
-+        <AssemblyVersion>2.15.10.0</AssemblyVersion>
-+        <FileVersion>2.15.10.0</FileVersion>
++        <AssemblyVersion>2.15.11.0</AssemblyVersion>
++        <FileVersion>2.15.11.0</FileVersion>
          <NoWarn>
              41999;42016;42017;42018;42019;42020;42021;42022;42032;42036;42314;
              VSTHRD002;VSTHRD003;VSTHRD110;VSTHRD200
 diff --git a/Plain Craft Launcher 2/metadata.json b/Plain Craft Launcher 2/metadata.json
-index 85aeee9..c3fd1ca 100644
+index 85aeee9..6d1caaf 100644
 --- a/Plain Craft Launcher 2/metadata.json	
 +++ b/Plain Craft Launcher 2/metadata.json	
-@@ -1,5 +1,5 @@
+@@ -1,9 +1,9 @@
  {
 -  "name": "Plain Craft Launcher Community Edition",
 +  "name": "梦之韵Pro",
    "version": {
-     "base": "2.15.1",
+-    "base": "2.15.1",
++    "base": "2.15.11",
      "upstream": "2.12.1",
+-    "suffix": "beta.1",
++    "suffix": "mzy.11",
+     "code": 523
+   },
+   "licenses": [
+@@ -128,4 +128,4 @@
+       "license": "https://github.com/dazinator/DotNet.Glob/blob/master/LICENSE"
+     }
+   ]
+-}
++}
+\ No newline at end of file
