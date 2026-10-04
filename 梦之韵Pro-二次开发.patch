@@ -1404,10 +1404,10 @@ index 0000000..36de9ff
 +</local:MyPageRight>
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs
 new file mode 100644
-index 0000000..429be75
+index 0000000..faf0edd
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs	
-@@ -0,0 +1,148 @@
+@@ -0,0 +1,163 @@
 +using System;
 +using System.Threading.Tasks;
 +using System.Windows;
@@ -1424,7 +1424,7 @@ index 0000000..429be75
 +    // 梦之韵Pro 服务端配置（可按需修改）
 +    public const string McServerAddress = "remv.top:11111";
 +    public const string WebsiteUrl = "https://www.camzy.tech";
-+    public const string ApiBase = "https://pca.camzy.tech";
++    public const string ApiBase = "https://api.camzy.tech";
 +    public const string Contact = "QQ 1096550598 / TG @maoxinhe";
 +
 +    private bool isLoaded;
@@ -1511,8 +1511,8 @@ index 0000000..429be75
 +
 +    private void BtnPack_Click(object sender, RoutedEventArgs e)
 +    {
-+        // 整合包下载入口：打开服务端整合包页面（可按需修改）
-+        ModBase.OpenWebsite(ApiBase + "/pack");
++        // 整合包下载入口：打开官网整合包页面（可按需修改）
++        ModBase.OpenWebsite(WebsiteUrl);
 +    }
 +
 +    private void BtnTutorial_Click(object sender, RoutedEventArgs e)
@@ -1522,18 +1522,19 @@ index 0000000..429be75
 +    }
 +
 +    /// <summary>
-+    ///     从服务端拉取更新日志并展示。
-+    ///     接口约定（暂定）：GET {ApiBase}/api/changelog，返回 {"version":"1.0.0","content":"更新内容"}
++    ///     从轻量 API 仓库拉取更新日志并展示。
++    ///     接口：GET {ApiBase}/changelog.json，返回 {"launcher":"...","changelog":[{"version":"...","date":"...","title":"...","content":["..."]}]}
 +    /// </summary>
 +    private async void LoadChangelogAsync()
 +    {
 +        try
 +        {
-+            var changelog = await HttpRequest.GetJsonAsync<ChangelogModel>(ApiBase + "/api/changelog");
-+            if (changelog is not null && !string.IsNullOrWhiteSpace(changelog.Content))
++            var changelog = await HttpRequest.GetJsonAsync<ChangelogModel>(ApiBase + "/changelog.json");
++            if (changelog is not null && changelog.Entries is { Count: > 0 } && !string.IsNullOrWhiteSpace(changelog.Entries[0].ContentText))
 +            {
-+                TextChangelogVersion.Text = Lang.Text("Setup.Service.Changelog.Version", changelog.Version ?? "未知版本");
-+                TextChangelogContent.Text = changelog.Content;
++                var entry = changelog.Entries[0];
++                TextChangelogVersion.Text = Lang.Text("Setup.Service.Changelog.Version", entry.Version ?? "未知版本");
++                TextChangelogContent.Text = entry.ContentText;
 +            }
 +            else
 +            {
@@ -1551,9 +1552,23 @@ index 0000000..429be75
 +
 +    public class ChangelogModel
 +    {
++        [JsonPropertyName("launcher")] public string? Launcher { get; set; }
++
++        [JsonPropertyName("changelog")] public List<ChangelogEntry>? Entries { get; set; }
++    }
++
++    public class ChangelogEntry
++    {
 +        [JsonPropertyName("version")] public string? Version { get; set; }
 +
-+        [JsonPropertyName("content")] public string? Content { get; set; }
++        [JsonPropertyName("date")] public string? Date { get; set; }
++
++        [JsonPropertyName("title")] public string? Title { get; set; }
++
++        [JsonPropertyName("content")] public List<string>? Content { get; set; }
++
++        [JsonIgnore]
++        public string ContentText => Content is null ? string.Empty : string.Join("\n", Content);
 +    }
 +}
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs
