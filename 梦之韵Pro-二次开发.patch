@@ -1379,10 +1379,10 @@ index d84d9a7..b3e9924 100644
                  if (ModMain.frmSetupLog is null)
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml
 new file mode 100644
-index 0000000..73a5e15
+index 0000000..0191595
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml	
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,88 @@
 +<local:MyPageRight
 +    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 +    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -1450,13 +1450,6 @@ index 0000000..73a5e15
 +                        <TextBlock x:Name="TextModUpdateStatus" TextWrapping="Wrap" FontSize="14" />
 +                        <ProgressBar x:Name="ProgressModUpdate" Margin="0,10,0,0" Height="8" Minimum="0" Maximum="100" />
 +                    </StackPanel>
-+                    <StackPanel x:Name="PanWhitelist" Margin="0,15,0,0">
-+                        <StackPanel Orientation="Horizontal">
-+                            <local:MyTextBox x:Name="InWhitelistName" Width="200" HintText="玩家名" />
-+                            <local:MyButton x:Name="BtnWhitelist" Text="查询白名单" ColorType="Normal" Margin="12,0,0,0" Click="BtnWhitelist_Click" />
-+                        </StackPanel>
-+                        <TextBlock x:Name="TextWhitelistResult" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="13" />
-+                    </StackPanel>
 +                </StackPanel>
 +            </local:MyCard>
 +
@@ -1480,10 +1473,10 @@ index 0000000..73a5e15
 +</local:MyPageRight>
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs
 new file mode 100644
-index 0000000..57603b9
+index 0000000..4a4dbff
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs	
-@@ -0,0 +1,515 @@
+@@ -0,0 +1,465 @@
 +using System;
 +using System.IO;
 +using System.Linq;
@@ -1678,43 +1671,6 @@ index 0000000..57603b9
 +        {
 +            ModBase.Log(ex, "[梦之韵Pro] 整合包下载失败");
 +            ModMain.MyMsgBox("整合包下载失败：" + ex.Message, "梦之韵Pro", isWarn: true);
-+        }
-+    }
-+
-+    /// <summary>白名单查询：GET {ApiBase}/api/whitelist/check?name=...</summary>
-+    private async void BtnWhitelist_Click(object sender, RoutedEventArgs e)
-+    {
-+        var name = InWhitelistName.Text?.Trim() ?? "";
-+        if (name.Length == 0)
-+        {
-+            ModMain.MyMsgBox("请先输入要查询的玩家名。", "梦之韵Pro", isWarn: true);
-+            return;
-+        }
-+
-+        BtnWhitelist.IsEnabled = false;
-+        TextWhitelistResult.Text = "正在查询…";
-+        try
-+        {
-+            var result = await HttpRequest.GetJsonAsync<WhitelistCheckModel>(
-+                ApiBase + "/api/whitelist/check?name=" + Uri.EscapeDataString(name));
-+            if (result is null || !result.Ok)
-+            {
-+                TextWhitelistResult.Text = "查询失败：" + (result?.Error ?? "未知错误");
-+                return;
-+            }
-+
-+            TextWhitelistResult.Text = result.Whitelisted
-+                ? $"玩家「{result.Name}」已在白名单内，可以正常游玩。" + (result.Total > 0 ? $"（当前白名单共 {result.Total} 人）" : "")
-+                : $"玩家「{result.Name}」不在白名单内，请联系管理团队申请加入（{Contact}）。";
-+        }
-+        catch (Exception ex)
-+        {
-+            ModBase.Log(ex, "[梦之韵Pro] 白名单查询失败");
-+            TextWhitelistResult.Text = "查询失败：" + ex.Message;
-+        }
-+        finally
-+        {
-+            BtnWhitelist.IsEnabled = true;
 +        }
 +    }
 +
@@ -1985,19 +1941,6 @@ index 0000000..57603b9
 +
 +        [JsonPropertyName("description")] public string? Description { get; set; }
 +    }
-+
-+    public class WhitelistCheckModel
-+    {
-+        [JsonPropertyName("ok")] public bool Ok { get; set; }
-+
-+        [JsonPropertyName("name")] public string? Name { get; set; }
-+
-+        [JsonPropertyName("whitelisted")] public bool Whitelisted { get; set; }
-+
-+        [JsonPropertyName("total")] public int Total { get; set; }
-+
-+        [JsonPropertyName("error")] public string? Error { get; set; }
-+    }
 +}
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupUI.xaml.cs
 index 614b0a5..c70e2ba 100644
@@ -2059,7 +2002,7 @@ index 3415d7a..82a2704 100644
                      if (!updateInfo.Changelog.Contains("<summary>") || string.IsNullOrWhiteSpace(summary.Trim()))
                          TextChangelog.Text = Lang.Text("Setup.Update.Changelog.Empty");
 diff --git a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj
-index 92f84ca..4c9ddcd 100644
+index 92f84ca..3a627af 100644
 --- a/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
 +++ b/Plain Craft Launcher 2/Plain Craft Launcher 2.csproj	
 @@ -24,12 +24,12 @@
@@ -2076,8 +2019,8 @@ index 92f84ca..4c9ddcd 100644
 +        <Description>Minecraft 启动器 (梦之韵Pro，基于 Plain Craft Launcher 社区版二次开发)</Description>
 +        <Product>梦之韵Pro</Product>
 +        <Copyright>Copyright © 梦之韵团队. All Rights Reserved.</Copyright>
-+        <AssemblyVersion>2.15.9.0</AssemblyVersion>
-+        <FileVersion>2.15.9.0</FileVersion>
++        <AssemblyVersion>2.15.10.0</AssemblyVersion>
++        <FileVersion>2.15.10.0</FileVersion>
          <NoWarn>
              41999;42016;42017;42018;42019;42020;42021;42022;42032;42036;42314;
              VSTHRD002;VSTHRD003;VSTHRD110;VSTHRD200
