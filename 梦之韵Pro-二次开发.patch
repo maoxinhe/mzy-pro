@@ -1404,7 +1404,7 @@ index 0000000..36de9ff
 +</local:MyPageRight>
 diff --git a/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs
 new file mode 100644
-index 0000000..c5439c3
+index 0000000..050cb28
 --- /dev/null
 +++ b/Plain Craft Launcher 2/Pages/PageSetup/PageSetupService.xaml.cs	
 @@ -0,0 +1,163 @@
@@ -1424,7 +1424,7 @@ index 0000000..c5439c3
 +    // 梦之韵Pro 服务端配置（可按需修改）
 +    public const string McServerAddress = "remv.top:11111";
 +    public const string WebsiteUrl = "https://www.camzy.tech";
-+    public const string ApiBase = "https://pca.camzy.tech";
++    public const string ApiBase = "https://cdn.camzy.tech";
 +    public const string Contact = "QQ 1096550598 / TG @maoxinhe";
 +
 +    private bool isLoaded;
