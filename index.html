@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>梦之韵Pro · Minecraft 启动器</title>
 <meta name="description" content="梦之韵Pro —— 一个由梦之韵团队打造、基于 Plain Craft Launcher 社区版的 Minecraft 启动器。集成服务器、模组更新、整合包与新手教程。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='2' fill='%237c5cff'/%3E%3Crect x='17' y='2' width='13' height='13' rx='2' fill='%23ffb454'/%3E%3Crect x='2' y='17' width='13' height='13' rx='2' fill='%234cd1c5'/%3E%3Crect x='17' y='17' width='13' height='13' rx='2' fill='%23ff6b6b'/%3E%3C/svg%3E">
@@ -40,7 +40,9 @@ img{max-width:100%;display:block}
 .btn-ghost{border-color:var(--line);color:var(--ink)}
 .btn-ghost:hover{background:var(--bg3)}
 .btn-sm{padding:8px 14px;font-size:13px}
-.hero{padding:96px 0 70px}
+.hero{padding:96px 0 70px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:url('assets/bg.jpg') center/cover no-repeat;z-index:-2}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,245,247,.82) 0%,rgba(255,245,247,.92) 100%);z-index:-1}
 .hero-in{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
 .badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--teal);border:1px solid rgba(76,209,197,.3);padding:5px 12px;border-radius:999px;margin-bottom:20px;font-family:var(--mono)}
 .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
