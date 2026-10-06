@@ -2,209 +2,241 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>梦之韵Pro · Minecraft 启动器</title>
-<meta name="description" content="梦之韵Pro —— 基于 PCL-CE 的 Minecraft 启动器，集成服务器、模组更新与新手教程。">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff6b9d'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E梦%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="description" content="梦之韵Pro —— 一个由梦之韵团队打造、基于 Plain Craft Launcher 社区版的 Minecraft 启动器。集成服务器、模组更新、整合包与新手教程。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='2' fill='%237c5cff'/%3E%3Crect x='17' y='2' width='13' height='13' rx='2' fill='%23ffb454'/%3E%3Crect x='2' y='17' width='13' height='13' rx='2' fill='%234cd1c5'/%3E%3Crect x='17' y='17' width='13' height='13' rx='2' fill='%23ff6b6b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0f1115;--bg2:#171a20;--bg3:#1e222a;
-  --line:#2a2e38;--ink:#e8e8ec;--dim:#8a8d96;
-  --pink:#ff6b9d;--pink2:#ff8fb5;--teal:#4cd1c5;
+  --bg:#fff5f7;--bg2:#ffe4ec;--bg3:#ffd6e3;
+  --line:rgba(180,60,100,.12);--ink:#3a2a30;--ink-dim:#9a7a85;
+  --brand:#ff6b9d;--brand2:#ffb454;--teal:#4cd1c5;--rose:#ff6b6b;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Noto Sans SC',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:var(--ink);font-family:'Noto Sans SC',system-ui,sans-serif;line-height:1.6;font-size:15px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
-.wrap{max-width:720px;margin:0 auto;padding:0 20px}
-.mono{font-family:'JetBrains Mono',monospace}
-
-/* 导航 */
-.nav{position:sticky;top:0;z-index:50;background:rgba(15,17,21,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.nav-in{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:720px;margin:0 auto;padding:0 20px}
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px}
-.brand .logo{width:28px;height:28px;border-radius:6px;background:var(--pink);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700}
-.nav-links{display:flex;gap:20px;font-size:13px;color:var(--dim)}
+img{max-width:100%;display:block}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(255,245,247,.85);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:19px;letter-spacing:.5px}
+.brand .mark{width:30px;height:30px;flex:none;display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.brand .mark i{display:block;border-radius:3px}
+.brand .mark i:nth-child(1){background:var(--brand)}
+.brand .mark i:nth-child(2){background:var(--brand2)}
+.brand .mark i:nth-child(3){background:var(--teal)}
+.brand .mark i:nth-child(4){background:var(--rose)}
+.nav-links{display:flex;gap:26px;font-size:14px;color:var(--ink-dim)}
 .nav-links a:hover{color:var(--ink)}
-
-/* Hero */
-.hero{padding:48px 0 36px}
-.hero .tag{display:inline-block;font-size:12px;color:var(--teal);background:rgba(76,209,197,.08);padding:4px 10px;border-radius:4px;margin-bottom:16px;font-family:'JetBrains Mono',monospace}
-.hero h1{font-size:28px;font-weight:700;line-height:1.3;margin-bottom:12px}
-.hero h1 em{font-style:normal;color:var(--pink)}
-.hero p{color:var(--dim);font-size:14px;max-width:440px;margin-bottom:24px}
-.hero .meta{display:flex;gap:24px;margin-bottom:28px;flex-wrap:wrap}
-.hero .meta div{font-size:13px}
-.hero .meta .k{color:var(--dim);font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
-.hero .meta .v{font-weight:500;margin-top:2px}
-
-/* 按钮 */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500;font-size:14px;padding:12px 24px;border-radius:8px;border:none;cursor:pointer;transition:opacity .15s;font-family:inherit}
-.btn-primary{background:var(--pink);color:#fff;width:100%}
-.btn-primary:active{opacity:.85}
-.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);width:100%}
-.btn-ghost:active{background:var(--bg3)}
-.btns{display:grid;gap:10px;margin-bottom:8px}
-
-/* 区块 */
-section{padding:32px 0;border-top:1px solid var(--line)}
-.sec-title{font-size:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
-
-/* 特性 */
-.feat-list{display:grid;gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
-.feat{background:var(--bg2);padding:16px}
-.feat h3{font-size:14px;font-weight:500;margin-bottom:4px}
-.feat p{font-size:13px;color:var(--dim)}
-
-/* 服务器 */
-.srv{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:20px}
-.srv h3{font-size:16px;font-weight:500;margin-bottom:8px}
-.srv p{font-size:13px;color:var(--dim);margin-bottom:16px}
-.srv-addr{display:flex;align-items:center;justify-content:space-between;background:#0a0c10;border:1px solid var(--line);border-radius:8px;padding:12px 16px}
-.srv-addr .addr{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--teal)}
-.srv-addr .copy{font-size:12px;color:var(--dim);cursor:pointer;background:none;border:none}
-.srv-addr .copy:active{color:var(--ink)}
-
-/* 关于 */
-.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.about-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px}
-.about-card h4{font-size:13px;font-weight:500;margin-bottom:10px;color:var(--dim)}
-.about-card p,.about-card a{font-size:13px;display:block;margin-bottom:4px;color:var(--ink)}
-.about-card a{color:var(--teal)}
-
-/* 更新日志 */
-.cl{display:grid;gap:16px}
-.cl-item{padding-left:16px;border-left:2px solid var(--line)}
-.cl-item .ver{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--pink)}
-.cl-item .date{font-size:12px;color:var(--dim);margin-left:8px}
-.cl-item p{font-size:13px;color:var(--dim);margin-top:4px}
-
-/* Footer */
-footer{padding:32px 0;border-top:1px solid var(--line);font-size:12px;color:var(--dim)}
-footer .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-
-/* Toast */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--line);padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;z-index:99;pointer-events:none}
+.nav-cta{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:10px 18px;border-radius:9px;border:1px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .2s,background .2s;white-space:nowrap;font-family:var(--sans)}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(255,107,157,.4)}
+.btn-ghost{border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{background:var(--bg3)}
+.btn-sm{padding:8px 14px;font-size:13px}
+.hero{padding:96px 0 70px}
+.hero-in{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--teal);border:1px solid rgba(76,209,197,.3);padding:5px 12px;border-radius:999px;margin-bottom:20px;font-family:var(--mono)}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
+h1{font-size:clamp(34px,5vw,58px);line-height:1.12;font-weight:900;letter-spacing:-.5px}
+h1 .grad{background:linear-gradient(90deg,var(--brand),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{margin:22px 0 30px;font-size:17px;color:var(--ink-dim);max-width:520px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap}
+.hero-meta{margin-top:34px;display:flex;gap:30px;flex-wrap:wrap}
+.meta-item .k{font-family:var(--mono);font-size:12px;color:var(--ink-dim);letter-spacing:.5px}
+.meta-item .v{font-weight:700;font-size:16px;margin-top:2px}
+.meta-item .v small{font-weight:400;color:var(--ink-dim);font-size:13px}
+.hero-visual{position:relative;display:grid;place-items:center}
+.iso{width:min(100%,360px);aspect-ratio:1;position:relative;transform:rotateX(8deg) rotateZ(-4deg);transform-style:preserve-3d}
+.iso .block{position:absolute;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 30px rgba(0,0,0,.4)}
+.blk1{width:46%;height:46%;left:6%;top:6%;background:linear-gradient(135deg,var(--brand),#e0447a)}
+.blk2{width:40%;height:40%;right:6%;top:12%;background:linear-gradient(135deg,var(--teal),#2aa79c)}
+.blk3{width:34%;height:34%;left:16%;bottom:6%;background:linear-gradient(135deg,var(--brand2),#e08f2f)}
+.blk4{width:24%;height:24%;right:12%;bottom:14%;background:linear-gradient(135deg,var(--rose),#d94747)}
+.iso .tag{position:absolute;left:-6px;bottom:-6px;background:var(--bg2);border:1px solid var(--line);padding:8px 14px;border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
+.iso .ring{position:absolute;inset:-6%;border:1px dashed rgba(255,255,255,.14);border-radius:22px;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+section{padding:64px 0}
+.sec-head{margin-bottom:44px}
+.sec-head .k{font-family:var(--mono);font-size:13px;color:var(--brand);letter-spacing:1px;text-transform:uppercase}
+.sec-head h2{font-size:clamp(24px,3vw,34px);font-weight:800;margin-top:8px}
+.sec-head p{color:var(--ink-dim);margin-top:10px;max-width:560px}
+.features{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feat{background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:26px;transition:transform .2s,border-color .2s}
+.feat:hover{transform:translateY(-4px);border-color:rgba(255,107,157,.4)}
+.feat .ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;margin-bottom:16px;background:rgba(255,107,157,.14);color:var(--brand)}
+.feat .ic.teal{background:rgba(76,209,197,.14);color:var(--teal)}
+.feat .ic.amber{background:rgba(255,180,84,.14);color:var(--brand2)}
+.feat .ic.rose{background:rgba(255,107,107,.14);color:var(--rose)}
+.feat h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.feat p{font-size:14px;color:var(--ink-dim)}
+.server-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:34px;position:relative;overflow:hidden}
+.server-card::before{content:'';position:absolute;inset:0;background:radial-gradient(500px 200px at 90% 0,rgba(76,209,197,.1),transparent)}
+.server-card h3{font-size:22px;font-weight:800}
+.server-card p{color:var(--ink-dim);margin:8px 0 18px;font-size:15px}
+.addr{display:inline-flex;align-items:center;gap:12px;background:#0a0c16;border:1px solid var(--line);padding:12px 18px;border-radius:10px;font-family:var(--mono);font-size:18px;color:var(--teal)}
+.addr .copy{color:var(--ink-dim);font-size:12px;font-family:var(--sans);cursor:pointer}
+.srv-side{display:flex;gap:12px;flex-direction:column}
+.about{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.about-card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:26px}
+.about-card h3{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.about-card h3 .bar{width:4px;height:18px;background:var(--brand);border-radius:2px}
+.about-card ul{list-style:none;display:grid;gap:10px}
+.about-card li{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.about-card li .k{color:var(--ink-dim);flex:none}
+.about-card li .v{text-align:right}
+.contact-list{display:grid;gap:10px;font-size:14px}
+.contact-list a{color:var(--teal);word-break:break-all}
+.contact-list a:hover{text-decoration:underline}
+.download{background:var(--bg2);border-top:1px solid var(--line)}
+.dl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.dl-card{background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:26px;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:border-color .2s}
+.dl-card:hover{border-color:rgba(255,107,157,.4)}
+.dl-card .os{font-family:var(--mono);font-size:14px;color:var(--ink-dim);letter-spacing:1px}
+.dl-card h3{font-size:19px;font-weight:800;margin:4px 0 2px}
+.dl-card p{font-size:13px;color:var(--ink-dim)}
+.dl-note{margin-top:22px;font-size:13px;color:var(--ink-dim);display:flex;gap:8px;align-items:center}
+.changelog{list-style:none;border-left:2px solid var(--line);margin-left:8px;padding-left:26px;display:grid;gap:26px}
+.changelog li{position:relative}
+.changelog li::before{content:'';position:absolute;left:-33px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px rgba(255,107,157,.15)}
+.changelog .ver{font-family:var(--mono);font-weight:700;color:var(--brand)}
+.changelog .date{font-size:12px;color:var(--ink-dim);margin-left:10px}
+.changelog p{font-size:14px;color:var(--ink-dim);margin-top:6px}
+.cl-note{color:var(--ink-dim);font-size:14px}
+footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font-size:13px}
+.foot-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.foot-links{display:flex;gap:20px}
+.foot-links a:hover{color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--line);color:var(--ink);padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.1)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:900px){
+  .hero-in{grid-template-columns:1fr;gap:40px}
+  .hero-visual{order:-1}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .about{grid-template-columns:1fr}
+  .dl-grid{grid-template-columns:1fr}
+  .server-card{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+@media(max-width:560px){
+  .feat-grid{grid-template-columns:1fr}
+  .hero{padding:60px 0 50px}
+  .nav-cta .btn-sm{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><span class="mark"><i></i><i></i><i></i><i></i></span>梦之韵Pro</a>
+    <nav class="nav-links">
+      <a href="#features">功能</a><a href="#server">服务器</a><a href="#about">关于</a><a href="#download">下载</a><a href="#changelog">更新日志</a>
+    </nav>
+    <div class="nav-cta"><a class="btn btn-primary btn-sm" href="#download">立即下载</a></div>
+  </div>
+</header>
 
-<nav class="nav">
-  <div class="nav-in">
-    <a class="brand" href="#top"><span class="logo">梦</span>梦之韵Pro</a>
-    <div class="nav-links">
-      <a href="#features">功能</a>
-      <a href="#server">服务器</a>
-      <a href="#about">关于</a>
+<section class="hero" id="top">
+  <div class="wrap hero-in">
+    <div class="hero-text">
+      <span class="badge"><span class="dot"></span>服务器已开放 · remv.top:11111</span>
+      <h1>一键启程，<br>畅游 <span class="grad">梦之韵</span></h1>
+      <p class="lead">梦之韵Pro 是基于 Plain Craft Launcher 社区版二次开发的 Minecraft 启动器，由梦之韵团队倾力打造。集成服务器信息、模组更新、整合包与新手教程，让每一步都简单。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#download">下载启动器</a>
+        <a class="btn btn-ghost" href="#server">加入服务器</a>
+      </div>
+      <div class="hero-meta">
+        <div class="meta-item"><div class="k">MC 服务器</div><div class="v">remv.top:11111</div></div>
+        <div class="meta-item"><div class="k">当前版本</div><div class="v" id="ver">2.15.40 <small>stable</small></div></div>
+        <div class="meta-item"><div class="k">开发团队</div><div class="v">梦之韵团队</div></div>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="iso"><span class="ring"></span><div class="block blk1"></div><div class="block blk2"></div><div class="block blk3"></div><div class="block blk4"></div><div class="tag">MENGZHIYUN PRO</div></div>
     </div>
   </div>
-</nav>
+</section>
 
-<div class="wrap" id="top">
-  <div class="hero">
-    <span class="tag">● 服务器在线 · remv.top:11111</span>
-    <h1>一键启程，<br>畅游<em>梦之韵</em></h1>
-    <p>基于 PCL-CE 社区版二次开发的 Minecraft 启动器，集成服务器、模组更新与新手教程。</p>
-    <div class="meta">
-      <div><div class="k">版本</div><div class="v" id="ver">v2.15.40</div></div>
-      <div><div class="k">系统</div><div class="v">Windows x64</div></div>
-      <div><div class="k">团队</div><div class="v">梦之韵</div></div>
-    </div>
-    <div class="btns">
-      <button class="btn btn-primary" onclick="dl()">下载启动器</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('server').scrollIntoView()">加入服务器</button>
-    </div>
-  </div>
-</div>
-
-<section id="features">
+<section class="features" id="features">
   <div class="wrap">
-    <div class="sec-title">Features</div>
-    <div class="feat-list">
-      <div class="feat"><h3>模组自动更新</h3><p>从服务器检测并下载最新模组，保持版本同步。</p></div>
-      <div class="feat"><h3>一键整合包</h3><p>PCL 格式整合包，双击导入即可游玩。</p></div>
-      <div class="feat"><h3>新手教程</h3><p>从下载到进服的全流程引导。</p></div>
-      <div class="feat"><h3>正版登录</h3><p>支持微软正版账号与外置登录。</p></div>
+    <div class="sec-head"><div class="k">Features</div><h2>为玩家打造的实用功能</h2><p>我们把启动、模组、服务器与新手引导整合在一起，减少折腾，把时间留给游戏。</p></div>
+    <div class="feat-grid">
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13l3 3 4-4"/></svg></div><h3>模组更新</h3><p>从梦之韵服务器自动检测并下载模组更新，保持 Mod 始终为最新版本。</p></div>
+      <div class="feat"><div class="ic teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div><h3>整合包</h3><p>提供 PCL 可识别的整合包，一键导入安装，开箱即玩。</p></div>
+      <div class="feat"><div class="ic amber"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>新手教程</h3><p>从下载、安装到进入游戏的全流程指引，适合第一次接触的玩家。</p></div>
+      <div class="feat"><div class="ic rose"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><path d="M9 21h6"/></svg></div><h3>账号与服务器</h3><p>集成多账号快速切换与服务器快捷加入，登录一步到位。</p></div>
+      <div class="feat"><div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3>启动优化</h3><p>多线程下载、智能崩溃分析与启动配置优化，让游戏加载更快更稳。</p></div>
+      <div class="feat"><div class="ic teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h3>个性化</h3><p>主题、背景、主页预设自由定制，打造属于你的启动器。</p></div>
     </div>
   </div>
 </section>
 
 <section id="server">
   <div class="wrap">
-    <div class="sec-title">Server</div>
-    <div class="srv">
-      <h3>梦之韵服务器</h3>
-      <p>Java 版 · 长期开放 · 纯净生存</p>
-      <div class="srv-addr">
-        <span class="addr">remv.top:11111</span>
-        <button class="copy" onclick="copyAddr()">复制</button>
-      </div>
+    <div class="sec-head"><div class="k">Server</div><h2>加入梦之韵服务器</h2><p>复制地址，在游戏中直接添加服务器即可。服务器长期开放，欢迎各位冒险家。</p></div>
+    <div class="server-card">
+      <div><h3>梦之韵服务器</h3><p>Java 版 · 长期开放 · 纯净生存与建筑玩法</p><span class="addr">remv.top:11111 <span class="copy" id="addrCopyBtn" role="button" tabindex="0">复制</span></span></div>
+      <div class="srv-side"><a class="btn btn-primary" href="#download">用梦之韵Pro 加入</a><span class="cl-note" style="font-size:12px">启动器内可在「梦之韵Pro 服务」页一键复制</span></div>
     </div>
   </div>
 </section>
 
-<section id="about">
+<section id="about" style="background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
   <div class="wrap">
-    <div class="sec-title">About</div>
-    <div class="about-grid">
-      <div class="about-card">
-        <h4>开发者</h4>
-        <p>Catkinr</p>
-        <p>liminalily</p>
-      </div>
-      <div class="about-card">
-        <h4>联系</h4>
-        <a href="https://wpa.qq.com/msgrd?v=3&uin=1096550598" target="_blank">QQ 1096550598</a>
-        <a href="https://t.me/maoxinhe" target="_blank">Telegram</a>
-      </div>
-      <div class="about-card">
-        <h4>基础</h4>
-        <p>Plain Craft Launcher CE</p>
-        <p>WPF / .NET</p>
-      </div>
-      <div class="about-card">
-        <h4>源码</h4>
-        <a href="https://github.com/PCL-Community/PCL2-CE" target="_blank">上游 PCL-CE</a>
-      </div>
+    <div class="sec-head"><div class="k">About</div><h2>关于梦之韵Pro</h2><p>一款由社区驱动的 Minecraft 启动器，基于 PCL-CE 二次开发。</p></div>
+    <div class="about">
+      <div class="about-card"><h3><span class="bar"></span>开发者</h3><ul><li><span class="k">主开发者</span><span class="v">Catkinr</span></li><li><span class="k">开发者</span><span class="v">liminalily</span></li></ul></div>
+      <div class="about-card"><h3><span class="bar" style="background:var(--teal)"></span>版权与来源</h3><ul><li><span class="k">版权</span><span class="v">梦之韵团队</span></li><li><span class="k">上游</span><span class="v">PCL-CE 社区</span></li></ul></div>
+      <div class="about-card"><h3><span class="bar" style="background:var(--brand2)"></span>联系我们</h3><div class="contact-list"><span><span style="color:var(--ink-dim)">QQ：</span><a href="https://wpa.qq.com/msgrd?v=3&uin=1096550598" target="_blank">1096550598</a></span><span><span style="color:var(--ink-dim)">Telegram：</span><a href="https://t.me/maoxinhe" target="_blank">@maoxinhe</a></span></div></div>
+      <div class="about-card"><h3><span class="bar" style="background:var(--rose)"></span>技术信息</h3><ul><li><span class="k">启动器 API</span><span class="v">apc.camzy.uno</span></li><li><span class="k">框架</span><span class="v">WPF / .NET</span></li></ul></div>
     </div>
   </div>
 </section>
 
-<section>
+<section class="download" id="download">
   <div class="wrap">
-    <div class="sec-title">Changelog</div>
-    <div class="cl">
-      <div class="cl-item">
-        <span class="ver">v2.15.40</span><span class="date">10-06</span>
-        <p>修复主窗口倾斜；轻量安装器；下载源切 Cloudflare 加速。</p>
-      </div>
-      <div class="cl-item">
-        <span class="ver">v2.15.39</span><span class="date">10-06</span>
-        <p>修复界面控件报错；版本检测逻辑修复。</p>
-      </div>
-      <div class="cl-item">
-        <span class="ver">v2.15.19</span><span class="date">10-05</span>
-        <p>启动自动检查更新；文案全部替换为梦之韵。</p>
-      </div>
+    <div class="sec-head"><div class="k">Download</div><h2>下载梦之韵Pro</h2><p>自包含单文件，无需安装运行时，双击即可运行。</p></div>
+    <div class="dl-grid">
+      <div class="dl-card"><div><div class="os">WINDOWS · X64</div><h3>梦之韵Pro x64</h3><p>适用于大多数 64 位 Windows 电脑</p></div><button class="btn btn-primary" onclick="window.open('https://apc.camzy.uno/update/download','_blank')">下载</button></div>
     </div>
+    <div class="dl-note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>通过 Cloudflare 全球加速节点分发。运行需 Windows 10 1809 及以上。</div>
   </div>
 </section>
 
-<footer>
-  <div class="wrap foot">
-    <span>© 2026 梦之韵Pro · 基于 PCL-CE</span>
-    <span>www.camzy.tech</span>
+<section id="changelog">
+  <div class="wrap">
+    <div class="sec-head"><div class="k">Changelog</div><h2>更新日志</h2></div>
+    <ul class="changelog">
+      <li><span class="ver">v2.15.40</span><span class="date">2026-10-06</span><p>修复主窗口倾斜问题；轻量安装器；下载源切换 Cloudflare 加速。</p></li>
+      <li><span class="ver">v2.15.39</span><span class="date">2026-10-06</span><p>修复界面控件操作报错；版本检测逻辑修复。</p></li>
+      <li><span class="ver">v2.15.19</span><span class="date">2026-10-05</span><p>启动时自动检查更新弹窗；文案全部替换为梦之韵。</p></li>
+    </ul>
   </div>
-</footer>
+</section>
+
+<footer><div class="wrap foot-in"><div>© 2026 梦之韵团队 · 基于 PCL-CE 社区二次开发</div><div class="foot-links"><a href="https://www.camzy.tech">官网</a><a href="https://t.me/maoxinhe">Telegram</a></div></div></footer>
 
 <div id="toast"></div>
 <script>
-function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2000)}
-function copyAddr(){var a='remv.top:11111';navigator.clipboard.writeText(a).then(function(){toast('已复制: '+a)})}
-function dl(){window.open('https://apc.camzy.uno/update/download','_blank')}
-fetch('https://apc.camzy.uno/update/latest').then(function(r){return r.json()}).then(function(j){if(j.version){document.getElementById('ver').textContent='v'+j.version}}).catch(function(){})
+(function(){
+  var toast=document.getElementById('toast'),timer;
+  function show(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(timer);timer=setTimeout(function(){toast.classList.remove('show')},2400);}
+  var c=document.getElementById('addrCopyBtn');
+  if(c){c.addEventListener('click',function(){var t='remv.top:11111';navigator.clipboard.writeText(t).then(function(){show('已复制: '+t)});});}
+  fetch('https://apc.camzy.uno/update/latest').then(function(r){return r.json();}).then(function(j){if(j.version){document.getElementById('ver').innerHTML=j.version+' <small>stable</small>';}}).catch(function(){});
+})();
 </script>
 </body>
 </html>
