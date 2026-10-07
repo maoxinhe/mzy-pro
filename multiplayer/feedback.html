@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>陶瓦联机反馈 · CMY 启动器</title>
+<meta name="description" content="CMY 启动器 · 陶瓦联机（Terracotta）反馈页面。遇到联机问题，请在这里告诉我们。">
+<style>
+:root{--brand:#EC407A;--brand2:#F48FB1;--ink:#3a2a2e;--ink-dim:#8a737a;--bg:#fff5f7;--bg2:#fff;--line:#f3d9df;--sans:'Noto Sans SC',system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh}
+a{color:var(--brand);text-decoration:none}
+a:hover{opacity:.8}
+.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(255,245,247,.88);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:62px;padding:0 20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;color:var(--ink)}
+.brand img{width:30px;height:30px;border-radius:8px}
+.nav-links{display:flex;gap:22px;font-size:14px;color:var(--ink-dim)}
+.nav-links a:hover{color:var(--ink)}
+.wrap{max-width:760px;margin:0 auto;padding:56px 20px 80px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:34px 36px;box-shadow:0 10px 30px rgba(255,107,157,.08)}
+h1{font-size:24px;margin-bottom:8px}
+.sub{color:var(--ink-dim);font-size:14px;margin-bottom:26px;line-height:1.7}
+.badge{display:inline-flex;align-items:center;gap:8px;background:#ffe3ec;color:var(--brand);font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;margin-bottom:18px}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:var(--brand);display:inline-block}
+.sec{margin-bottom:26px}
+.sec h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec p{font-size:14px;color:var(--ink-dim);line-height:1.8}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:10px 18px;border-radius:9px;border:1px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .2s,background .2s;white-space:nowrap}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(255,107,157,.4)}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:var(--bg2)}
+.btn-ghost:hover{background:var(--bg)}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.kv{margin-top:20px;border-top:1px solid var(--line);padding-top:16px;display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:var(--ink-dim)}
+.kv b{color:var(--ink);font-weight:600}
+.footer{text-align:center;color:var(--ink-dim);font-size:12px;padding:24px 0 40px}
+@media (max-width:640px){
+  .nav-links{display:none}
+  .card{padding:24px 20px}
+  .wrap{padding:32px 16px 60px}
+}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in" style="max-width:1040px">
+    <a class="brand" href="https://www.camzy.tech"><img src="../assets/logo.png" alt="CMY">CMY 启动器</a>
+    <nav class="nav-links">
+      <a href="https://www.camzy.tech/#features">功能</a>
+      <a href="https://www.camzy.tech/#download">下载</a>
+      <a href="https://docs.camzy.tech" target="_blank" rel="noopener">帮助文档</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <span class="badge"><span class="dot"></span>陶瓦联机 · Terracotta</span>
+    <h1>反馈与帮助</h1>
+    <p class="sub">使用陶瓦联机时遇到问题？请先查看帮助文档，或通过以下渠道向我们反馈。你的每一次反馈都能让 CMY 变得更好。</p>
+
+    <div class="sec">
+      <h2>🔍 先查帮助文档</h2>
+      <p>联机教程、常见问题、启动器使用指南都在文档站，大部分问题都能在这里找到答案。</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://docs.camzy.tech" target="_blank" rel="noopener">打开帮助文档 ↗</a>
+        <a class="btn btn-ghost" href="https://docs.camzy.tech/launcher/multiplayer-help.html" target="_blank" rel="noopener">陶瓦联机教程 ↗</a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>💬 官方 QQ 群</h2>
+      <p>加入梦之韵官方 QQ 群，直接与团队和其他玩家交流。</p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="https://qun.qq.com/universal-share/share?ac=1&authKey=izNwNGOSgy7S0f7IUvQSYrklF5Ae7nnFTp%2BphwU0w2paGJbtXfRY1qng7V88AKiP&busi_data=eyJncm91cENvZGUiOiIxMTAzMzg0MzA0IiwidG9rZW4iOiJlRlJUTEx4QU5OVDlxSkg3a3NDeFBrTWRueWVHcmNWYUN4eUtNTjFpdi9vZ0FhMlR1TzNEMlRIeWtFMW5yMkkvIiwidWluIjoiMTA5NjU1MDU5OCJ9&data=XhJzrl_mq0gpfvwn2zON0cU8Hc82MJlwBBGNYLK7-GibowMSukjVmaiGayg1OZ6YsR-OP3ilMcWw55BjloH53g&svctype=4&tempid=h5_group_info" target="_blank" rel="noopener">加入官方 QQ 群 ↗</a>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>🐛 提交 Issue</h2>
+      <p>遇到明确的 Bug，请到 GitHub 提交 Issue，附上日志与复现步骤会更高效。</p>
+      <div class="actions">
+        <a class="btn btn-ghost" href="https://github.com/maoxinhe/mzy-pro-source/issues" target="_blank" rel="noopener">提交 GitHub Issue ↗</a>
+      </div>
+    </div>
+
+    <div class="kv">
+      <span>启动器版本：<b id="lv">读取中…</b></span>
+      <span>反馈入口：<b>陶瓦联机</b></span>
+      <span>协议：<b>v1</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">© 2026 苏州梦之韵科技 · CMY 启动器 · 基于 HMCL 开源项目重建</div>
+
+<script>
+// 从 URL query 读取启动器自动携带的版本信息
+(function(){
+  var p = new URLSearchParams(location.search);
+  var lv = p.get('launcher_version');
+  var v = p.get('v');
+  var el = document.getElementById('lv');
+  if (lv) el.textContent = lv;
+  else el.textContent = '未知（请更新启动器）';
+})();
+</script>
+</body>
+</html>
