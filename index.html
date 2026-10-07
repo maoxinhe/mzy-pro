@@ -135,8 +135,9 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
 #toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--line);color:var(--ink);padding:12px 20px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.1)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:900px){
-  .hero-in{grid-template-columns:1fr;gap:40px}
-  .hero-visual{order:-1}
+  .hero-in{grid-template-columns:1fr;gap:36px}
+  .hero-visual{order:2;margin-top:6px}
+  .hero-cat{width:min(100%,230px);margin:0 auto;border-radius:20px}
   .feat-grid{grid-template-columns:1fr 1fr}
   .about{grid-template-columns:1fr}
   .dl-grid{grid-template-columns:1fr}
