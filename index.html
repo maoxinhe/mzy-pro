@@ -179,7 +179,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
         <a class="btn btn-ghost" href="#shots">查看截图</a>
       </div>
       <div class="hero-meta">
-        <div class="meta-item"><div class="k">MC 服务器</div><div class="v">加群获取 · 防 DDoS</div></div>
+        <div class="meta-item"><div class="k">MC 服务器</div><div class="v">加群获取地址</div></div>
         <div class="meta-item"><div class="k">当前版本</div><div class="v" id="ver">3.17-mzy.46 <small>stable</small></div></div>
         <div class="meta-item"><div class="k">开发团队</div><div class="v">梦之韵团队</div></div>
       </div>
@@ -219,9 +219,9 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
 
 <section id="server">
   <div class="wrap">
-    <div class="sec-head"><div class="k">Server</div><h2>加入梦之韵服务器</h2><p>为防止服务器被 DDoS 攻击，地址不在官网公开。加入官方 QQ 群即可获取服务器地址，群内还有最新公告与玩家交流。</p></div>
+    <div class="sec-head"><div class="k">Server</div><h2>加入梦之韵服务器</h2><p>加入官方 QQ 群即可获取服务器地址，群内还有最新公告与玩家交流，欢迎各位冒险家。</p></div>
     <div class="server-card">
-      <div><h3>梦之韵服务器</h3><p>Java 版 · 长期开放 · 纯净生存与建筑玩法</p><span class="addr">服务器地址已隐藏 · <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=izNwNGOSgy7S0f7IUvQSYrklF5Ae7nnFTp%2BphwU0w2paGJbtXfRY1qng7V88AKiP&busi_data=eyJncm91cENvZGUiOiIxMTAzMzg0MzA0IiwidG9rZW4iOiJlRlJUTEx4QU5OVDlxSkg3a3NDeFBrTWRueWVHcmNWYUN4eUtNTjFpdi9vZ0FhMlR1TzNEMlRIeWtFMW5yMkkvIiwidWluIjoiMTA5NjU1MDU5OCJ9&data=XhJzrl_mq0gpfvwn2zON0cU8Hc82MJlwBBGNYLK7-GibowMSukjVmaiGayg1OZ6YsR-OP3ilMcWw55BjloH53g&svctype=4&tempid=h5_group_info" target="_blank" rel="noopener" style="color:#ff4081;font-weight:600;">加群获取地址 →</a></span></div>
+      <div><h3>梦之韵服务器</h3><p>Java 版 · 长期开放 · 纯净生存与建筑玩法</p><span class="addr">服务器地址请加群获取 · <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=izNwNGOSgy7S0f7IUvQSYrklF5Ae7nnFTp%2BphwU0w2paGJbtXfRY1qng7V88AKiP&busi_data=eyJncm91cENvZGUiOiIxMTAzMzg0MzA0IiwidG9rZW4iOiJlRlJUTEx4QU5OVDlxSkg3a3NDeFBrTWRueWVHcmNWYUN4eUtNTjFpdi9vZ0FhMlR1TzNEMlRIeWtFMW5yMkkvIiwidWluIjoiMTA5NjU1MDU5OCJ9&data=XhJzrl_mq0gpfvwn2zON0cU8Hc82MJlwBBGNYLK7-GibowMSukjVmaiGayg1OZ6YsR-OP3ilMcWw55BjloH53g&svctype=4&tempid=h5_group_info" target="_blank" rel="noopener" style="color:#ff4081;font-weight:600;">加群获取 →</a></span></div>
       <div class="srv-side"><a class="btn btn-primary" href="https://qun.qq.com/universal-share/share?ac=1&authKey=izNwNGOSgy7S0f7IUvQSYrklF5Ae7nnFTp%2BphwU0w2paGJbtXfRY1qng7V88AKiP&busi_data=eyJncm91cENvZGUiOiIxMTAzMzg0MzA0IiwidG9rZW4iOiJlRlJUTEx4QU5OVDlxSkg3a3NDeFBrTWRueWVHcmNWYUN4eUtNTjFpdi9vZ0FhMlR1TzNEMlRIeWtFMW5yMkkvIiwidWluIjoiMTA5NjU1MDU5OCJ9&data=XhJzrl_mq0gpfvwn2zON0cU8Hc82MJlwBBGNYLK7-GibowMSukjVmaiGayg1OZ6YsR-OP3ilMcWw55BjloH53g&svctype=4&tempid=h5_group_info" target="_blank" rel="noopener">加入 QQ 群</a><span class="cl-note" style="font-size:12px">群内获取服务器地址与最新公告</span></div>
     </div>
   </div>
@@ -279,7 +279,7 @@ footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink-dim);font
 (function(){
   var toast=document.getElementById('toast'),timer;
   function show(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(timer);timer=setTimeout(function(){toast.classList.remove('show')},2400);}
-  // 服务器地址已隐藏，改为加群获取，移除旧的复制按钮逻辑
+  // 服务器地址改为加群获取，移除旧的复制按钮逻辑
   fetch('https://dll.camzy.uno/update/latest').then(function(r){return r.json();}).then(function(j){if(j.version){document.getElementById('ver').innerHTML=j.version+' <small>stable</small>';}}).catch(function(){});
 })();
 </script>
